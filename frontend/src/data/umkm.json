@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "nama": "Cireng Dua Ellya",
+    "kategori": "Kuliner",
+    "alamat": "Kalicecep, Bejiarum, Kec. Kertek, Kabupaten Wonosobo, Jawa Tengah 56371",
+    "lat": -7.35986761253203,
+    "lng": 109.9416955177686,
+    "foto": "../../public/images/id1.png",
+    "deskripsi": "Menyediakan makanan tradisional dan gorengan rumahan yang bikin nagih!",
+    "link_maps": "https://maps.app.goo.gl/uYoeSuyvxiVj2ab79"
+  },
+  {
+    "id": 2,
+    "nama": "Cireng Mamake DanicSya",
+    "kategori": "Kerajinan",
+    "alamat": "Kalicecep, Bejiarum, Kec. Kertek, Kabupaten Wonosobo, Jawa Tengah 56371",
+    "lat": -7.359952238886273,
+    "lng": 109.9433647890766,
+    "foto": "../../public/images/id2.png",
+    "deskripsi": "Produk Cireng",
+    "link_maps": "https://maps.app.goo.gl/9MFUhwTJtjWLXkUp6"
+  },
+  {
+    "id": 3,
+    "nama": "Cireng Kenzi",
+    "kategori": "Kuliner",
+    "alamat": "JWRV+2QG, Kalicelep, Bejiarum, Kec. Kertek, Kabupaten Wonosobo, Jawa Tengah 56371",
+    "lat": -7.35988382047237,
+    "lng": 109.94433138320395,
+    "foto": "/images/id3.png",
+    "deskripsi": "Percirengan Duniawi",
+    "link_maps": "https://maps.app.goo.gl/CWBXWKHqvo35hCyEA"
+  }
+]
