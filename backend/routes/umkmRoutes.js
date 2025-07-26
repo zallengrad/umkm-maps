@@ -1,10 +1,13 @@
 // routes/umkmRoutes.js
 const express = require("express");
 const router = express.Router();
-const { getAllUMKM, createUMKM, updateUMKM, deleteUMKM } = require("../controllers/umkmController");
+const { getAllUMKM, createUMKM, updateUMKM, deleteUMKM, getUMKMById } = require("../controllers/umkmController"); // ✨ IMPORT FUNGSI BARU INI! ✨
 
 // GET semua UMKM
 router.get("/", getAllUMKM);
+
+// ✨ TAMBAHKAN RUTE INI! ✨
+router.get("/:id", getUMKMById);
 
 // POST tambah UMKM
 router.post("/", createUMKM);

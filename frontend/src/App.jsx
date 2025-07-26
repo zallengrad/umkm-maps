@@ -1,16 +1,22 @@
+// frontend/src/App.jsx
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
-import ProtectedRoute from "./components/ProtectedRoute";
+import DetailPage from "./pages/DetailPage"; // ✨ IMPORT DETAILPAGE ✨
+import ProtectedRoute from "./components/ProtectedRoute"; // Jika menggunakan ini
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        {/* ✨ TAMBAHKAN RUTE UNTUK DETAIL PAGE ✨ */}
+        <Route path="/umkm/:id" element={<DetailPage />} />
+
+        {/* Rute yang dilindungi untuk AdminPage */}
         <Route
           path="/admin"
           element={
@@ -19,8 +25,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Tambahkan rute lain jika ada */}
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

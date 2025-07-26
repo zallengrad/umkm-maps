@@ -1,10 +1,10 @@
+// frontend/src/components/ModalTambahUMKM.jsx
 import React, { useState, useEffect } from "react";
 import { uploadToSupabase } from "../utils/uploadToSupabase";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../utils/supabaseClient"; // Pastikan ini mengimpor instance Supabase
 
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
-
-const ModalTambahUMKM = ({ onClose }) => {
+const ModalTambahUMKM = ({ onClose, onSubmit }) => {
+  // Tambahkan onSubmit prop
   const [formData, setFormData] = useState({
     nama: "",
     kategori: "",
@@ -18,6 +18,7 @@ const ModalTambahUMKM = ({ onClose }) => {
   const [fotoFile, setFotoFile] = useState(null);
   const [previewFoto, setPreviewFoto] = useState("");
   const [userId, setUserId] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Tambahkan state loading
 
   useEffect(() => {
     const getUser = async () => {
@@ -45,11 +46,15 @@ const ModalTambahUMKM = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true); // Mulai loading
 
     try {
       let photoUrl = "";
-      if (fotoFile && userId) {
-        photoUrl = await uploadToSupabase(fotoFile, userId);
+      if (fotoFile) {
+        photoUrl = await uploadToSupabase(fotoFile);
+        console.log("📸 Gambar berhasil diunggah! URL:", photoUrl);
+      } else {
+        console.warn("⚠️ Tidak ada gambar yang dipilih untuk diunggah.");
       }
 
       const payload = {
@@ -61,19 +66,31 @@ const ModalTambahUMKM = ({ onClose }) => {
         longitude: parseFloat(formData.lng),
         photos: photoUrl ? [photoUrl] : [],
         description: formData.deskripsi,
-        google_maps_url: formData.link_maps,
+        Maps_url: formData.link_maps,
       };
 
-      // Kirim data ke backend kamu
-      await fetch("http://localhost:3000/umkm", {
+      console.log("📤 Mengirim data UMKM ke backend:", payload);
+      const response = await fetch("http://localhost:3000/umkm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      onClose(); // Tutup modal
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gagal menyimpan UMKM: ${response.status} - ${errorText}`);
+      }
+
+      const newUmkmFromBackend = await response.json(); // ✨ TANGKAP RESPONS DARI BACKEND ✨
+      console.log("🎉 UMKM berhasil ditambahkan:", newUmkmFromBackend);
+
+      onSubmit(newUmkmFromBackend); // ✨ Panggil onSubmit dengan data UMKM baru ✨
+      // onClose(); // onClose akan dipanggil setelah onSubmit selesai
     } catch (error) {
+      console.error("❌ Terjadi kesalahan saat menambah UMKM:", error);
       alert("Upload gagal: " + error.message);
+    } finally {
+      setIsLoading(false); // Selesai loading
     }
   };
 
@@ -140,8 +157,8 @@ const ModalTambahUMKM = ({ onClose }) => {
             <button type="button" onClick={onClose} className="text-sm px-4 py-2 rounded border">
               Batal
             </button>
-            <button type="submit" className="text-sm px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-              Tambah UMKM
+            <button type="submit" disabled={isLoading} className="text-sm px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              {isLoading ? "Menyimpan..." : "Tambah UMKM"}
             </button>
           </div>
         </form>
