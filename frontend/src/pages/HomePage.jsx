@@ -1,6 +1,5 @@
 // frontend/src/pages/HomePage.jsx
-import React, { useState, useEffect, useCallback } from "react"; // Tambahkan useCallback
-// Hapus ini: import dataUMKM from "../data/umkm.json";
+import React, { useState, useEffect, useCallback } from "react";
 import UMKMCard from "../components/UMKMCard";
 import MapView from "../components/MapView";
 import Navbar from "../components/Navbar";
@@ -10,42 +9,42 @@ const HomePage = () => {
   const [umkmList, setUmkmList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [loading, setLoading] = useState(true); // Tambahkan state loading
-  const [error, setError] = useState(null); // Tambahkan state error
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fungsi untuk mengambil data UMKM dari backend (mirip dengan AdminPage)
   const fetchUMKMs = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:3000/umkm"); // Ganti dengan URL backend API-mu
+      const response = await fetch("http://localhost:3000/umkm");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       setUmkmList(data);
-      console.log("✅ Data UMKM berhasil diambil dari backend untuk HomePage:", data);
+      console.log("✅ Data UMKM berhasil diambil dari backend untuk HomePage:", data); // ✨ LOG INI ✨
     } catch (err) {
       console.error("❌ Gagal mengambil data UMKM untuk HomePage:", err);
       setError("Gagal memuat data UMKM. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
-  }, []); // Dependensi kosong karena tidak ada variabel eksternal yang berubah
+  }, []);
 
-  // Efek untuk memuat data saat komponen mount
   useEffect(() => {
-    fetchUMKMs(); // Panggil fungsi fetchUMKMs
-  }, [fetchUMKMs]); // Tambahkan fetchUMKMs ke dependensi useEffect
+    fetchUMKMs();
+  }, [fetchUMKMs]);
 
   const filteredUMKM = umkmList.filter((umkm) => {
-    // ✨ PERUBAHAN DI SINI: gunakan umkm.name dan umkm.category ✨
-    const nama = umkm.name || ""; // Gunakan 'name' dari backend
-    const kategori = umkm.category || ""; // Gunakan 'category' dari backend
+    const nama = umkm.name || "";
+    const kategori = umkm.category || "";
     const cocokNama = nama.toLowerCase().includes(searchTerm.toLowerCase());
     const cocokKategori = selectedCategory === "" || kategori === selectedCategory;
     return cocokNama && cocokKategori;
   });
+
+  console.log("HomePage: umkmList (sebelum render MapView):", umkmList); // ✨ LOG INI ✨
+  console.log("HomePage: filteredUMKM (sebelum render MapView):", filteredUMKM); // ✨ LOG INI ✨
 
   return (
     <>
@@ -65,12 +64,11 @@ const HomePage = () => {
           <div className="mt-8 flex flex-wrap justify-center gap-6">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-3 py-6 rounded-xl text-center shadow-lg w-32 hover:scale-105 transition-transform duration-300">
               <div className="text-sm font-medium">TOTAL UMKM</div>
-              <div className="text-4xl mt-1 font-extrabold leading-none">{loading ? "..." : umkmList.length}</div> {/* Tampilkan loading state */}
+              <div className="text-4xl mt-1 font-extrabold leading-none">{loading ? "..." : umkmList.length}</div>
             </div>
             <div className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-3 py-6 rounded-xl text-center shadow-lg w-32 hover:scale-105 transition-transform duration-300">
               <div className="text-sm font-medium">KATEGORI</div>
-              {/* ✨ PERUBAHAN DI SINI: gunakan umkm.category untuk mendapatkan kategori unik ✨ */}
-              <div className="text-4xl mt-1 font-extrabold leading-none">{loading ? "..." : new Set(umkmList.map((item) => item.category)).size}</div> {/* Tampilkan loading state */}
+              <div className="text-4xl mt-1 font-extrabold leading-none">{loading ? "..." : new Set(umkmList.map((item) => item.category)).size}</div>
             </div>
           </div>
         </div>
@@ -94,10 +92,9 @@ const HomePage = () => {
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             <option value="">Semua Kategori</option>
-            {loading ? ( // Tampilkan loading state untuk opsi kategori
+            {loading ? (
               <option>Memuat...</option>
             ) : (
-              // ✨ PERUBAHAN DI SINI: buat opsi kategori dinamis dari data UMKM ✨
               [...new Set(umkmList.map((u) => u.category))].map((kategori) => (
                 <option key={kategori} value={kategori}>
                   {kategori}
@@ -124,7 +121,6 @@ const HomePage = () => {
           ) : (
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
               {filteredUMKM.map((umkm) => (
-                // Pastikan key dan props umkm sesuai dengan data dari backend
                 <UMKMCard key={umkm.id || umkm.name} umkm={umkm} />
               ))}
             </div>
@@ -138,8 +134,6 @@ const HomePage = () => {
           <h2 className="text-2xl font-bold mb-4 text-gray-800" style={{ fontFamily: "Poppins, sans-serif" }}>
             Peta UMKM
           </h2>
-          {/* Kirim umkmList ke MapView agar peta bisa menampilkan marker UMKM */}
-          {/* ✨ PERBAIKAN DI SINI: Pindahkan komentar ke baris terpisah atau gunakan komentar JSX saja ✨ */}
           {loading ? <p className="text-center text-gray-600">Memuat peta...</p> : error ? <p className="text-center text-red-600">Gagal memuat peta.</p> : <MapView umkmList={filteredUMKM} />}
         </div>
       </section>

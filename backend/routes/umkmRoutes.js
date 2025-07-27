@@ -1,7 +1,7 @@
 // routes/umkmRoutes.js
 const express = require("express");
 const router = express.Router();
-const { getAllUMKM, createUMKM, updateUMKM, deleteUMKM, getUMKMById } = require("../controllers/umkmController"); // ✨ IMPORT FUNGSI BARU INI! ✨
+const { getAllUMKM, createUMKM, updateUMKM, deleteUMKM, getUMKMById } = require("../controllers/umkmController");
 
 // GET semua UMKM
 router.get("/", getAllUMKM);

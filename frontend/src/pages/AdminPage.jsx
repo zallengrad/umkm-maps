@@ -6,6 +6,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ModalEditUMKM from "../components/ModalEditUMKM";
 import ModalTambahUMKM from "../components/ModalTambahUMKM";
+// ✨ IMPORT MODAL BARU ✨
+import ModalConfirmDelete from "../components/ModalConfirmDelete";
 
 const AdminPage = () => {
   const [umkmList, setUmkmList] = useState([]);
@@ -17,6 +19,10 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // ✨ STATE BARU UNTUK MODAL KONFIRMASI DELETE ✨
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [umkmToDelete, setUmkmToDelete] = useState(null); // Menyimpan objek UMKM yang akan dihapus
 
   const fetchUMKMs = useCallback(async () => {
     setLoading(true);
@@ -47,7 +53,6 @@ const AdminPage = () => {
   }, [navigate, fetchUMKMs]);
 
   const filteredUMKM = umkmList.filter((umkm) => {
-    // ✨ PERUBAHAN DI SINI: gunakan umkm.name untuk nama UMKM ✨
     const nama = umkm.name || "";
     const kategori = umkm.category || "";
     const cocokNama = nama.toLowerCase().includes(searchTerm.toLowerCase());
@@ -78,22 +83,43 @@ const AdminPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Yakin ingin menghapus UMKM ini?");
-    if (confirmDelete) {
-      try {
-        const response = await fetch(`http://localhost:3000/umkm/${id}`, {
-          method: "DELETE",
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        await fetchUMKMs();
-      } catch (err) {
-        console.error("❌ Gagal menghapus UMKM:", err);
-        alert("Gagal menghapus UMKM: " + err.message);
-      }
+  // ✨ UBAH FUNGSI handle DELETE UNTUK MEMUNCULKAN MODAL ✨
+  const handleDelete = (umkmId) => {
+    // umkmId dari UMKMCard
+    const umkmToConfirm = umkmList.find((umkm) => umkm.id === umkmId);
+    if (umkmToConfirm) {
+      setUmkmToDelete(umkmToConfirm);
+      setShowDeleteConfirmModal(true);
     }
+  };
+
+  // ✨ FUNGSI BARU UNTUK KONFIRMASI HAPUS ✨
+  const handleConfirmDelete = async () => {
+    if (!umkmToDelete) return; // Pastikan ada UMKM yang akan dihapus
+
+    try {
+      // Panggil API DELETE ke backend
+      const response = await fetch(`http://localhost:3000/umkm/${umkmToDelete.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      console.log("✅ UMKM berhasil dihapus dari backend.");
+      await fetchUMKMs(); // Ambil data terbaru setelah penghapusan
+      setShowDeleteConfirmModal(false); // Tutup modal konfirmasi
+      setUmkmToDelete(null); // Reset UMKM yang akan dihapus
+    } catch (err) {
+      console.error("❌ Gagal menghapus UMKM:", err);
+      alert("Gagal menghapus UMKM: " + err.message);
+      setShowDeleteConfirmModal(false); // Tutup modal meskipun ada error
+      setUmkmToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmModal(false);
+    setUmkmToDelete(null);
   };
 
   const handleAddUMKM = async (newUMKMFromBackend) => {
@@ -131,7 +157,6 @@ const AdminPage = () => {
               {loading ? (
                 <p>Memuat kategori...</p>
               ) : (
-                // ✨ PERUBAHAN DI SINI: gunakan umkm.category untuk mendapatkan kategori unik ✨
                 [...new Set(umkmList.map((u) => u.category))].map((kategori) => (
                   <span key={kategori} className="bg-gray-200 text-gray-800 text-sm px-3 py-1 rounded-full">
                     {kategori}
@@ -160,7 +185,6 @@ const AdminPage = () => {
               {loading ? (
                 <option>Memuat...</option>
               ) : (
-                // ✨ PERUBAHAN DI SINI: gunakan umkm.category untuk mendapatkan kategori unik ✨
                 [...new Set(umkmList.map((u) => u.category))].map((kategori) => (
                   <option key={kategori} value={kategori}>
                     {kategori}
@@ -193,6 +217,7 @@ const AdminPage = () => {
           ) : (
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
               {filteredUMKM.map((umkm) => (
+                // Pastikan umkm memiliki ID yang unik untuk key
                 <UMKMCard key={umkm.id || umkm.name} umkm={umkm} isAdmin={true} onEdit={handleEdit} onDelete={handleDelete} />
               ))}
             </div>
@@ -207,6 +232,15 @@ const AdminPage = () => {
 
       {/* Modal Tambah */}
       {showAddModal && <ModalTambahUMKM onClose={() => setShowAddModal(false)} onSubmit={handleAddUMKM} />}
+
+      {/* ✨ MODAL KONFIRMASI DELETE ✨ */}
+      {showDeleteConfirmModal && umkmToDelete && (
+        <ModalConfirmDelete
+          itemName={umkmToDelete.name} // Kirim nama UMKM untuk ditampilkan di modal
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
+      )}
     </>
   );
 };

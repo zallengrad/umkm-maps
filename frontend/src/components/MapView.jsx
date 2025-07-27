@@ -1,11 +1,11 @@
 // frontend/src/components/MapView.jsx
 import React from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css"; // Pastikan CSS Leaflet diimpor
-import L from "leaflet"; // Import Leaflet objek untuk kustomisasi marker
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
 // Custom default icon for Leaflet markers
-delete L.Icon.Default.prototype._getIconUrl; // ✨ PERBAIKI BARIS INI! ✨
+delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
@@ -13,8 +13,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
-// Sekarang MapView menerima prop umkmList
 const MapView = ({ umkmList }) => {
+  console.log("MapView: Menerima umkmList:", umkmList); // ✨ LOG INI ✨
+
   // Pastikan ada data UMKM sebelum mencoba mendapatkan posisi tengah
   const centerLat = umkmList.length > 0 ? umkmList[0].latitude : -7.8013; // Koordinat default Desa Bejiarum (misal)
   const centerLng = umkmList.length > 0 ? umkmList[0].longitude : 110.3643; // Koordinat default Desa Bejiarum (misal)
@@ -26,14 +27,12 @@ const MapView = ({ umkmList }) => {
     <MapContainer center={position} zoom={13} scrollWheelZoom={false} className="h-[500px] w-full rounded-lg shadow-lg">
       <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       {umkmList.map((umkm) => {
-        // Pastikan latitude dan longitude adalah angka yang valid
         const lat = parseFloat(umkm.latitude);
         const lng = parseFloat(umkm.longitude);
 
-        // Hanya render marker jika koordinatnya valid
         if (isNaN(lat) || isNaN(lng)) {
           console.warn(`UMKM "${umkm.name}" memiliki koordinat tidak valid: Lat ${umkm.latitude}, Lng ${umkm.longitude}`);
-          return null; // Jangan render marker jika koordinat invalid
+          return null;
         }
 
         return (
