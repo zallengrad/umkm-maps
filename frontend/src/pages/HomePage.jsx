@@ -5,6 +5,9 @@ import MapView from "../components/MapView";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+// ✨ DAFTAR KATEGORI UMKM YANG LENGKAP ✨
+const UMKM_CATEGORIES = ["Kuliner", "Jasa", "Kerajinan / Handmade", "Perdagangan (Retail/Reseller)", "Digital / Kreatif", "Pertanian", "Perikanan & Peternakan", "Kosmetik & Herbal", "Mainan & Edukasi Anak", "Manufaktur Rumahan", "Lainnya"];
+
 const HomePage = () => {
   const [umkmList, setUmkmList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,7 +25,7 @@ const HomePage = () => {
       }
       const data = await response.json();
       setUmkmList(data);
-      console.log("✅ Data UMKM berhasil diambil dari backend untuk HomePage:", data); // ✨ LOG INI ✨
+      console.log("✅ Data UMKM berhasil diambil dari backend untuk HomePage:", data);
     } catch (err) {
       console.error("❌ Gagal mengambil data UMKM untuk HomePage:", err);
       setError("Gagal memuat data UMKM. Silakan coba lagi.");
@@ -43,8 +46,8 @@ const HomePage = () => {
     return cocokNama && cocokKategori;
   });
 
-  console.log("HomePage: umkmList (sebelum render MapView):", umkmList); // ✨ LOG INI ✨
-  console.log("HomePage: filteredUMKM (sebelum render MapView):", filteredUMKM); // ✨ LOG INI ✨
+  console.log("HomePage: umkmList (sebelum render MapView):", umkmList);
+  console.log("HomePage: filteredUMKM (sebelum render MapView):", filteredUMKM);
 
   return (
     <>
@@ -92,15 +95,12 @@ const HomePage = () => {
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             <option value="">Semua Kategori</option>
-            {loading ? (
-              <option>Memuat...</option>
-            ) : (
-              [...new Set(umkmList.map((u) => u.category))].map((kategori) => (
-                <option key={kategori} value={kategori}>
-                  {kategori}
-                </option>
-              ))
-            )}
+            {/* ✨ PERBAIKAN DI SINI: Gunakan UMKM_CATEGORIES untuk opsi select ✨ */}
+            {UMKM_CATEGORIES.map((kategori) => (
+              <option key={kategori} value={kategori}>
+                {kategori}
+              </option>
+            ))}
           </select>
         </div>
       </section>

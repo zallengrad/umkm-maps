@@ -3,22 +3,26 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { FiArrowLeft, FiMapPin, FiPhone, FiInfo, FiClock, FiUser } from "react-icons/fi"; // Tambahkan ikon FiClock, FiUser
+// Tambahkan ikon FiClock, FiUser (sudah ada)
+import { FiArrowLeft, FiMapPin, FiPhone, FiInfo, FiClock, FiUser } from "react-icons/fi";
 
-// ✨ Import Swiper React components ✨
+// Import Swiper React components
 import { Swiper, SwiperSlide } from "swiper/react";
-// ✨ Import Swiper modules ✨
-import { Autoplay, Pagination, Navigation } from "swiper/modules";
+// Import Swiper modules
+import { Autoplay, Pagination } from "swiper/modules"; // ✨ HAPUS NAVIGATION DARI SINI ✨
 // Pastikan CSS Swiper diimpor di main.jsx atau App.jsx
 // import 'swiper/css';
-// import 'swiper/css/navigation';
-// import 'swiper/css/pagination';
+// import 'swiper/css/pagination'; // Hanya ini jika navigation dihapus
 
 const DetailPage = () => {
   const { id } = useParams();
   const [umkm, setUmkm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // ✨ LOGIKA BARU: Cek status login admin ✨
+  const isAdminLoggedIn = localStorage.getItem("isLoggedIn") === "true" || sessionStorage.getItem("isLoggedIn") === "true";
+  const backLinkTarget = isAdminLoggedIn ? "/admin" : "/"; // Tentukan tujuan link kembali
 
   useEffect(() => {
     const fetchUMKMDetail = async () => {
@@ -63,8 +67,8 @@ const DetailPage = () => {
         <Navbar />
         <section className="pt-24 px-4 py-10 min-h-screen flex flex-col items-center justify-center bg-gray-50">
           <p className="text-center text-red-600">{error}</p>
-          <Link to="/" className="mt-4 text-blue-500 hover:underline">
-            Kembali ke Beranda
+          <Link to={backLinkTarget} className="mt-4 text-blue-500 hover:underline">
+            Kembali ke {isAdminLoggedIn ? "Dashboard Admin" : "Beranda"}
           </Link>
         </section>
         <Footer />
@@ -78,8 +82,8 @@ const DetailPage = () => {
         <Navbar />
         <section className="pt-24 px-4 py-10 min-h-screen flex flex-col items-center justify-center bg-gray-50">
           <p className="text-center text-gray-500">UMKM tidak ditemukan.</p>
-          <Link to="/" className="mt-4 text-blue-500 hover:underline">
-            Kembali ke Beranda
+          <Link to={backLinkTarget} className="mt-4 text-blue-500 hover:underline">
+            Kembali ke {isAdminLoggedIn ? "Dashboard Admin" : "Beranda"}
           </Link>
         </section>
         <Footer />
@@ -98,19 +102,18 @@ const DetailPage = () => {
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
           {/* Header & Gambar (Menggunakan Swiper) */}
           <div className="relative h-80">
-            {" "}
-            {/* Tinggi tetap untuk carousel */}
             {displayedPhotos.length > 0 ? (
               <Swiper
-                modules={[Autoplay, Pagination, Navigation]}
+                modules={[Autoplay, Pagination]} // ✨ HAPUS NAVIGATION DARI SINI ✨
                 spaceBetween={0}
                 slidesPerView={1}
                 autoplay={{
-                  delay: 3500, // Geser setiap 3.5 detik
+                  delay: 3500,
                   disableOnInteraction: false,
                 }}
                 pagination={{ clickable: true }}
-                navigation={true}
+                // ✨ HAPUS BARIS INI UNTUK MENGHILANGKAN TOMBOL NAVIGASI ✨
+                // navigation={true}
                 className="w-full h-full"
               >
                 {displayedPhotos.map((photoUrl, index) => (
@@ -124,15 +127,12 @@ const DetailPage = () => {
               <img src="/images/placeholder-umkm.jpg" alt="No image available" className="w-full h-full object-cover" />
             )}
             <div className="absolute inset-0 bg-black/40 flex items-end p-6 z-10">
-              {" "}
-              {/* z-index lebih tinggi dari Swiper */}
               <h1 className="text-4xl font-extrabold text-white drop-shadow-lg" style={{ fontFamily: "Poppins, sans-serif" }}>
                 {umkm.name}
               </h1>
             </div>
-            <Link to="/" className="absolute top-4 left-4 text-white text-3xl p-2 rounded-full bg-black/50 hover:bg-black/70 transition z-20">
-              {" "}
-              {/* z-index lebih tinggi */}
+            {/* ✨ UBAH TARGET LINK KEMBALI ✨ */}
+            <Link to={backLinkTarget} className="absolute top-4 left-4 text-white text-3xl p-2 rounded-full bg-black/50 hover:bg-black/70 transition z-20">
               <FiArrowLeft />
             </Link>
           </div>
@@ -143,12 +143,13 @@ const DetailPage = () => {
               <FiInfo className="text-lg text-gray-500" />
               {umkm.category}
             </p>
-            {umkm.owner_name && (
-              <p className="text-sm text-gray-600 mb-4 flex items-center gap-2">
-                <FiUser className="text-lg text-gray-500" />
-                Pemilik: {umkm.owner_name}
-              </p>
-            )}
+            {/* ✨ HAPUS BAGIAN INI UNTUK MENGHILANGKAN NAMA PEMILIK ✨ */}
+            {/* {umkm.owner_name && (
+                <p className="text-sm text-gray-600 mb-4 flex items-center gap-2">
+                    <FiUser className="text-lg text-gray-500"/>
+                    Pemilik: {umkm.owner_name}
+                </p>
+            )} */}
 
             <h2 className="text-xl font-bold text-gray-800 mb-3">Deskripsi</h2>
             <p className="text-gray-700 leading-relaxed mb-6">{umkm.description || "Deskripsi belum tersedia."}</p>
@@ -161,21 +162,21 @@ const DetailPage = () => {
                   {umkm.address}
                 </p>
               )}
-              {umkm.kontak && ( // Jika ada field kontak (pastikan ini ada di DB atau hapus)
+              {umkm.kontak && (
                 <p className="flex items-center gap-2 text-gray-700">
                   <FiPhone className="text-lg text-green-500" />
                   {umkm.kontak}
                 </p>
               )}
-              {umkm.jam_buka &&
-                umkm.jam_tutup && ( // Jika ada field jam_buka dan jam_tutup (pastikan ini ada di DB atau hapus)
-                  <p className="flex items-center gap-2 text-gray-700">
-                    <FiClock className="text-lg text-purple-500" />
-                    Jam Buka: {umkm.jam_buka} - {umkm.jam_tutup}
-                  </p>
-                )}
+              {umkm.jam_buka && umkm.jam_tutup && (
+                <p className="flex items-center gap-2 text-gray-700">
+                  <FiClock className="text-lg text-purple-500" />
+                  Jam Buka: {umkm.jam_buka} - {umkm.jam_tutup}
+                </p>
+              )}
             </div>
 
+            {/* ✨ PERBAIKAN DI SINI: Gunakan umkm.Maps_url ✨ */}
             {umkm.Maps_url && (
               <div className="mt-4">
                 <a href={umkm.Maps_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition">

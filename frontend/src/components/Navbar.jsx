@@ -1,20 +1,55 @@
+// frontend/src/components/Navbar.jsx
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-const Navbar = () => {
+const Navbar = ({ onLogoutClick }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const isLoginPage = location.pathname === "/login";
-  const isAdminPage = location.pathname === "/admin";
+  // ✨ PERBAIKAN DI SINI: Tangani trailing slash untuk isAdminPage ✨
+  const isAdminPage = location.pathname === "/admin" || location.pathname === "/admin/";
+  // Alternatif yang lebih kuat: location.pathname.startsWith("/admin") && (location.pathname.length === 6 || location.pathname.length === 7)
 
-  const handleLogout = () => {
+  const isHomePage = location.pathname === "/";
+  const isDetailPage = location.pathname.startsWith("/umkm/");
+
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true" || sessionStorage.getItem("isLoggedIn") === "true";
+
+  const defaultLogoutHandler = () => {
     localStorage.removeItem("isLoggedIn");
+    sessionStorage.removeItem("isLoggedIn");
     navigate("/login");
   };
 
-  // Logo arah ke /admin jika sedang di halaman admin, sisanya ke /
+  const finalLogoutHandler = onLogoutClick || defaultLogoutHandler;
+
   const logoTarget = isAdminPage ? "/admin" : "/";
+
+  let rightButton = null;
+
+  if (isLoginPage) {
+    rightButton = (
+      <Link to="/" className="text-sm font-medium text-white bg-[#F59E0B] px-4 py-2 rounded-lg hover:bg-yellow-600 transition" style={{ fontFamily: "Inter, sans-serif" }}>
+        Home
+      </Link>
+    );
+  } else if (isDetailPage) {
+    rightButton = null;
+  } else if (isAdminPage) {
+    // Blok ini sekarang akan terpanggil untuk /admin dan /admin/
+    rightButton = (
+      <button onClick={finalLogoutHandler} className="text-sm font-medium text-white bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>
+        Logout
+      </button>
+    );
+  } else if (isHomePage) {
+    rightButton = (
+      <Link to="/login" className="text-sm font-medium text-white bg-[#F59E0B] px-4 py-2 rounded-lg hover:bg-yellow-600 transition" style={{ fontFamily: "Inter, sans-serif" }}>
+        Login
+      </Link>
+    );
+  }
 
   return (
     <header className="fixed top-0 w-full z-50">
@@ -26,19 +61,7 @@ const Navbar = () => {
           </Link>
 
           {/* Tombol kanan */}
-          {isLoginPage ? (
-            <Link to="/" className="text-sm font-medium text-white bg-[#F59E0B] px-4 py-2 rounded-lg hover:bg-yellow-600 transition" style={{ fontFamily: "Inter, sans-serif" }}>
-              Home
-            </Link>
-          ) : isAdminPage ? (
-            <button onClick={handleLogout} className="text-sm font-medium text-white bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>
-              Logout
-            </button>
-          ) : (
-            <Link to="/login" className="text-sm font-medium text-white bg-[#F59E0B] px-4 py-2 rounded-lg hover:bg-yellow-600 transition" style={{ fontFamily: "Inter, sans-serif" }}>
-              Login
-            </Link>
-          )}
+          {rightButton}
         </div>
       </div>
     </header>

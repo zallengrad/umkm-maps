@@ -1,19 +1,30 @@
+// frontend/src/pages/LoginPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(""); // ✨ UBAH email JADI username ✨
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false); // ✨ STATE BARU untuk remember me ✨
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (email === "admin@desa.com" && password === "admin123") {
-      localStorage.setItem("isLoggedIn", "true");
+
+    // ✨ Ganti email dengan username ✨
+    if (username === "bejiarumbersatu" && password === "umkm123") {
+      // ✨ LOGIKA REMEMBER ME ✨
+      if (rememberMe) {
+        localStorage.setItem("isLoggedIn", "true"); // Simpan di localStorage untuk persisten
+        sessionStorage.removeItem("isLoggedIn"); // Hapus dari sessionStorage jika ada
+      } else {
+        sessionStorage.setItem("isLoggedIn", "true"); // Simpan di sessionStorage untuk sesi saja
+        localStorage.removeItem("isLoggedIn"); // Hapus dari localStorage jika ada
+      }
       navigate("/admin");
     } else {
-      alert("Email atau password salah.");
+      alert("Username atau password salah.");
     }
   };
 
@@ -35,18 +46,18 @@ const LoginPage = () => {
 
           {/* FORM */}
           <form onSubmit={handleLogin} className="space-y-5 text-left">
-            {/* Email */}
+            {/* Username */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                Username {/* ✨ UBAH LABEL INI ✨ */}
               </label>
               <input
-                id="email"
-                type="email"
+                id="username" // ✨ UBAH ID INI ✨
+                type="text" // ✨ UBAH TYPE INI ✨
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 shadow-sm transition"
-                placeholder="admin@desa.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="bejiarumbersatu" // ✨ UBAH PLACEHOLDER INI ✨
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
@@ -65,10 +76,13 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <div className="text-right mt-1">
-                <a href="#" className="text-sm text-yellow-600 hover:underline">
-                  Forgot password?
-                </a>
+
+              {/* ✨ CHECKBOX REMEMBER ME ✨ */}
+              <div className="text-left mt-1">
+                <input id="rememberMe" type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="mt-3 h-4 w-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500" />
+                <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-900">
+                  Remember me
+                </label>
               </div>
             </div>
 

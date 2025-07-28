@@ -6,8 +6,10 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ModalEditUMKM from "../components/ModalEditUMKM";
 import ModalTambahUMKM from "../components/ModalTambahUMKM";
-// ✨ IMPORT MODAL BARU ✨
 import ModalConfirmDelete from "../components/ModalConfirmDelete";
+
+// DAFTAR KATEGORI UMKM YANG LENGKAP
+const UMKM_CATEGORIES = ["Kuliner", "Jasa", "Kerajinan / Handmade", "Perdagangan (Retail/Reseller)", "Digital / Kreatif", "Pertanian", "Perikanan & Peternakan", "Kosmetik & Herbal", "Mainan & Edukasi Anak", "Manufaktur Rumahan", "Lainnya"];
 
 const AdminPage = () => {
   const [umkmList, setUmkmList] = useState([]);
@@ -20,9 +22,8 @@ const AdminPage = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // ✨ STATE BARU UNTUK MODAL KONFIRMASI DELETE ✨
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-  const [umkmToDelete, setUmkmToDelete] = useState(null); // Menyimpan objek UMKM yang akan dihapus
+  const [umkmToDelete, setUmkmToDelete] = useState(null);
 
   const fetchUMKMs = useCallback(async () => {
     setLoading(true);
@@ -44,7 +45,8 @@ const AdminPage = () => {
   }, []);
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    // ✨ PERUBAHAN DI SINI: Cek di localStorage ATAU sessionStorage ✨
+    const isLoggedIn = localStorage.getItem("isLoggedIn") || sessionStorage.getItem("isLoggedIn");
     if (!isLoggedIn) {
       navigate("/login");
     } else {
@@ -83,9 +85,7 @@ const AdminPage = () => {
     }
   };
 
-  // ✨ UBAH FUNGSI handle DELETE UNTUK MEMUNCULKAN MODAL ✨
   const handleDelete = (umkmId) => {
-    // umkmId dari UMKMCard
     const umkmToConfirm = umkmList.find((umkm) => umkm.id === umkmId);
     if (umkmToConfirm) {
       setUmkmToDelete(umkmToConfirm);
@@ -93,12 +93,10 @@ const AdminPage = () => {
     }
   };
 
-  // ✨ FUNGSI BARU UNTUK KONFIRMASI HAPUS ✨
   const handleConfirmDelete = async () => {
-    if (!umkmToDelete) return; // Pastikan ada UMKM yang akan dihapus
+    if (!umkmToDelete) return;
 
     try {
-      // Panggil API DELETE ke backend
       const response = await fetch(`http://localhost:3000/umkm/${umkmToDelete.id}`, {
         method: "DELETE",
       });
@@ -106,13 +104,13 @@ const AdminPage = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       console.log("✅ UMKM berhasil dihapus dari backend.");
-      await fetchUMKMs(); // Ambil data terbaru setelah penghapusan
-      setShowDeleteConfirmModal(false); // Tutup modal konfirmasi
-      setUmkmToDelete(null); // Reset UMKM yang akan dihapus
+      await fetchUMKMs();
+      setShowDeleteConfirmModal(false);
+      setUmkmToDelete(null);
     } catch (err) {
       console.error("❌ Gagal menghapus UMKM:", err);
       alert("Gagal menghapus UMKM: " + err.message);
-      setShowDeleteConfirmModal(false); // Tutup modal meskipun ada error
+      setShowDeleteConfirmModal(false);
       setUmkmToDelete(null);
     }
   };
@@ -126,6 +124,9 @@ const AdminPage = () => {
     await fetchUMKMs();
     setShowAddModal(false);
   };
+
+  // ✨ LOGIKA BARU: Kumpulkan kategori yang ada datanya di umkmList ✨
+  const categoriesWithData = new Set(umkmList.map((u) => u.category));
 
   return (
     <>
@@ -146,7 +147,7 @@ const AdminPage = () => {
             </div>
             <div className="bg-blue-100 text-blue-800 px-4 py-4 rounded-lg shadow-sm text-center">
               <div className="text-sm font-medium">Jumlah Kategori</div>
-              <div className="text-4xl font-bold">{loading ? "..." : new Set(umkmList.map((u) => u.category)).size}</div>
+              <div className="text-4xl font-bold">{loading ? "..." : categoriesWithData.size}</div> {/* Gunakan categoriesWithData.size */}
             </div>
           </div>
 
@@ -157,11 +158,19 @@ const AdminPage = () => {
               {loading ? (
                 <p>Memuat kategori...</p>
               ) : (
-                [...new Set(umkmList.map((u) => u.category))].map((kategori) => (
-                  <span key={kategori} className="bg-gray-200 text-gray-800 text-sm px-3 py-1 rounded-full">
-                    {kategori}
-                  </span>
-                ))
+                // ✨ PERUBAHAN DI SINI: Terapkan warna berdasarkan apakah kategori punya data ✨
+                UMKM_CATEGORIES.map((kategori) => {
+                  const hasData = categoriesWithData.has(kategori);
+                  const categoryClass = hasData
+                    ? "bg-green-200 text-green-800" // Warna hijau jika ada data
+                    : "bg-gray-200 text-gray-800"; // Warna abu-abu jika tidak ada data
+
+                  return (
+                    <span key={kategori} className={`${categoryClass} px-3 py-1 rounded-full text-sm font-medium`}>
+                      {kategori}
+                    </span>
+                  );
+                })
               )}
             </div>
           </div>
@@ -182,15 +191,11 @@ const AdminPage = () => {
               style={{ fontFamily: "Inter, sans-serif" }}
             >
               <option value="">Semua Kategori</option>
-              {loading ? (
-                <option>Memuat...</option>
-              ) : (
-                [...new Set(umkmList.map((u) => u.category))].map((kategori) => (
-                  <option key={kategori} value={kategori}>
-                    {kategori}
-                  </option>
-                ))
-              )}
+              {UMKM_CATEGORIES.map((kategori) => (
+                <option key={kategori} value={kategori}>
+                  {kategori}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -217,7 +222,6 @@ const AdminPage = () => {
           ) : (
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
               {filteredUMKM.map((umkm) => (
-                // Pastikan umkm memiliki ID yang unik untuk key
                 <UMKMCard key={umkm.id || umkm.name} umkm={umkm} isAdmin={true} onEdit={handleEdit} onDelete={handleDelete} />
               ))}
             </div>
@@ -233,14 +237,8 @@ const AdminPage = () => {
       {/* Modal Tambah */}
       {showAddModal && <ModalTambahUMKM onClose={() => setShowAddModal(false)} onSubmit={handleAddUMKM} />}
 
-      {/* ✨ MODAL KONFIRMASI DELETE ✨ */}
-      {showDeleteConfirmModal && umkmToDelete && (
-        <ModalConfirmDelete
-          itemName={umkmToDelete.name} // Kirim nama UMKM untuk ditampilkan di modal
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
-        />
-      )}
+      {/* MODAL KONFIRMASI DELETE */}
+      {showDeleteConfirmModal && umkmToDelete && <ModalConfirmDelete itemName={umkmToDelete.name} onConfirm={handleConfirmDelete} onCancel={handleCancelDelete} />}
     </>
   );
 };
