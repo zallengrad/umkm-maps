@@ -2,41 +2,39 @@
 import React, { useState, useEffect, useRef } from "react";
 import { uploadToSupabase } from "../utils/uploadToSupabase";
 import { supabase } from "../utils/supabaseClient";
-import { FiCheckCircle, FiAlertCircle, FiLoader, FiXCircle, FiPlus } from "react-icons/fi"; // Import FiPlus
+import { FiXCircle, FiPlus } from "react-icons/fi";
+import { API_BASE_URL } from "../utils/apiConfig";
 
-// DAFTAR KATEGORI UMKM YANG LENGKAP
-const UMKM_CATEGORIES = [
-  "Kuliner",
-  "Jasa",
-  "Kerajinan / Handmade",
-  "Perdagangan (Retail/Reseller)",
-  "Digital / Kreatif",
-  "Pertanian",
-  "Perikanan & Peternakan",
-  "Kosmetik & Herbal",
-  "Mainan & Edukasi Anak",
-  "Manufaktur Rumahan",
-  "Lain nya",
+// DAFTAR KATEGORI UMKM YANG LENGKAP (tetap sama)
+const UMKM_CATEGORIES = ["Kuliner", "Jasa", "Kerajinan / Handmade", "Perdagangan (Retail/Reseller)", "Digital / Kreatif", "Pertanian", "Perikanan & Peternakan", "Kosmetik & Herbal", "Mainan & Edukasi Anak", "Manufaktur Rumahan", "Lainnya"];
+
+// ✨ DAFTAR DUSUN DI DESA BEJIARUM ✨
+const DUSUN_OPTIONS = [
+  "", // Opsi default "Pilih Dusun"
+  "Kalicecep",
+  "Beji Jurang",
+  "Beji Dukuh",
+  "Penanggulan",
+  "Berngosan",
 ];
 
 const ModalTambahUMKM = ({ onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     name: "",
     category: "",
-    address: "",
-    latitude: "",
-    longitude: "",
+    // ✨ UBAH INI: Hapus address, ganti dengan rt_rw dan dusun ✨
+    rt_rw: "", // Input baru untuk RT/RW
+    dusun: "", // Input baru untuk Dusun
     description: "",
-    Maps_url: "",
+    google_maps_url: "",
   });
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
-  const fileInputRef = useRef(null); // Ref to the hidden file input
+  const fileInputRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState("");
-  const [latLngStatus, setLatLngStatus] = useState("idle");
 
   useEffect(() => {
     const getUser = async () => {
@@ -48,8 +46,6 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
       }
     };
     getUser();
-
-    // Cleanup preview URLs on unmount
     return () => {
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
@@ -58,11 +54,8 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     const newFiles = files.filter((file) => !selectedFiles.some((f) => f.name === file.name && f.size === file.size && f.type === file.type));
-
     setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles].slice(0, 3));
     setPreviewUrls((prevUrls) => [...prevUrls, ...newFiles.map((file) => URL.createObjectURL(file))].slice(0, 3));
-
-    // Reset the file input value so the same file can be added again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -73,7 +66,6 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
     if (fileToRemove) {
       URL.revokeObjectURL(previewUrls.find((_, index) => index === indexToRemove));
     }
-
     setSelectedFiles((prevFiles) => prevFiles.filter((_, index) => index !== indexToRemove));
     setPreviewUrls((prevUrls) => prevUrls.filter((_, index) => index !== indexToRemove));
   };
@@ -84,38 +76,9 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
     }
   };
 
-  const handleChange = async (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (name === "Maps_url") {
-      if (value.trim() === "") {
-        setFormData((prev) => ({ ...prev, latitude: "", longitude: "" }));
-        setLatLngStatus("idle");
-        return;
-      }
-
-      setLatLngStatus("loading");
-      try {
-        const response = await fetch(`http://localhost:3000/api/maps/resolve?url=${encodeURIComponent(value)}`);
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (data.lat && data.lng) {
-          setFormData((prev) => ({ ...prev, latitude: data.lat.toString(), longitude: data.lng.toString() }));
-          setLatLngStatus("success");
-          setFormData((prev) => ({ ...prev, Maps_url: data.longUrl || value }));
-        } else {
-          throw new Error("Koordinat tidak ditemukan di URL ini.");
-        }
-      } catch (error) {
-        console.error("Gagal mengekstrak koordinat:", error);
-        setFormData((prev) => ({ ...prev, latitude: "", longitude: "" }));
-        setLatLngStatus("error");
-      }
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -125,10 +88,6 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
     let photoUrls = [];
 
     try {
-      if (formData.Maps_url && (isNaN(parseFloat(formData.latitude)) || isNaN(parseFloat(formData.longitude)))) {
-        throw new Error("Koordinat Latitude atau Longitude tidak valid dari URL Google Maps. Pastikan URL Maps benar.");
-      }
-
       for (const file of selectedFiles) {
         const url = await uploadToSupabase(file);
         photoUrls.push(url);
@@ -140,19 +99,34 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
         photoUrls = photoUrls.slice(0, 3);
       }
 
+      // ✨ LOGIKA BARU: Rangkai string 'address' dari input terstruktur ✨
+      let fullAddress = [];
+      if (formData.rt_rw.trim()) {
+        fullAddress.push(`RT.${formData.rt_rw.trim()}`); // Asumsi format RT.XX/RW.YY
+      }
+      if (formData.dusun.trim()) {
+        fullAddress.push(`Dusun ${formData.dusun.trim()}`);
+      }
+      // Tambahkan detail desa, kecamatan, kabupaten, provinsi yang otomatis
+      fullAddress.push("Bejiarum, Kec. Kertek, Kabupaten Wonosobo, Jawa Tengah 56371");
+
+      const finalAddressString = fullAddress.join(", "); // Gabungkan menjadi satu string
+
       const payload = {
         name: formData.name,
         owner_name: "Admin Desa",
         category: formData.category,
-        address: formData.address,
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude),
-        photos: photoUrls,
+        address: finalAddressString, // ✨ GUNAKAN STRING ALAMAT YANG DIRANGKAI ✨
         description: formData.description,
-        Maps_url: formData.Maps_url,
+        google_maps_url: formData.google_maps_url,
+        // Latitude dan longitude tidak lagi dikirim jika tidak diperlukan di DB
+        // Jika DB Anda masih butuh, Anda bisa tambahkan kembali dengan nilai default null
+        latitude: null, // Asumsi tidak perlu lagi disimpan jika peta tidak divisualisasi
+        longitude: null, // Asumsi tidak perlu lagi disimpan jika peta tidak divisualisasi
+        photos: photoUrls,
       };
 
-      const response = await fetch("http://localhost:3000/umkm", {
+      const response = await fetch(`${API_BASE_URL}/umkm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -162,7 +136,6 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
         const errorText = await response.text();
         throw new Error(`Gagal menyimpan UMKM: ${response.status} - ${errorText}`);
       }
-
       const newUmkmFromBackend = await response.json();
       onSubmit(newUmkmFromBackend);
       onClose();
@@ -199,34 +172,42 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Alamat</label>
-                <textarea name="address" value={formData.address} onChange={handleChange} className="w-full border px-3 py-2 rounded" rows={2} />
+              {/* ✨ INPUT BARU: RT/RW dan Dusun ✨ */}
+              <div className="flex gap-4">
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium mb-1">RT/RW (Opsional)</label>
+                  <input name="rt_rw" value={formData.rt_rw} onChange={handleChange} className="w-full border px-3 py-2 rounded" placeholder="Contoh: 01/02" />
+                </div>
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium mb-1">Dusun</label>
+                  <select name="dusun" value={formData.dusun} onChange={handleChange} className="w-full border px-3 py-2 rounded" required>
+                    {DUSUN_OPTIONS.map((dusun) => (
+                      <option key={dusun || "default"} value={dusun}>
+                        {dusun || "Pilih Dusun"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">Deskripsi</label>
                 <textarea name="description" value={formData.description} onChange={handleChange} className="w-full border px-3 py-2 rounded" rows={2} />
               </div>
+
+              {/* ✨ Tampilkan Desa, Kecamatan, Kabupaten, Provinsi otomatis ✨ */}
+              <div className="text-sm text-gray-600">Desa: Bejiarum, Kec. Kertek, Kab. Wonosobo, Jawa Tengah</div>
             </div>
 
             {/* KANAN */}
             <div className="space-y-4">
-              {/* INPUT LATITUDE DAN LONGITUDE DISEM BUNYIKAN! */}
-              <input type="hidden" name="latitude" value={formData.latitude} />
-              <input type="hidden" name="longitude" value={formData.longitude} />
+              {/* INPUT LATITUDE DAN LONGITUDE DISEM BUNYIKAN! (Sudah dihapus dari state) */}
+              {/* Ini hanya sebagai pengingat bahwa input ini tidak lagi ada di sini */}
 
-              {/* ✨ MODIFIED PHOTO UPLOAD SECTION */}
+              {/* MODIFIED PHOTO UPLOAD SECTION */}
               <div>
                 <label className="block text-sm font-medium mb-1">Foto UMKM (hingga 3 foto)</label>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileChange}
-                  className="hidden" // Hide the default file input
-                />
+                <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleFileChange} className="hidden" />
                 <div className="flex flex-row gap-2">
                   {previewUrls.map((url, index) => (
                     <div key={index} className="relative h-24 w-24">
@@ -249,16 +230,14 @@ const ModalTambahUMKM = ({ onClose, onSubmit }) => {
                 {selectedFiles.length > 3 && <p className="text-red-500 text-xs mt-1">Hanya 3 foto pertama yang akan disimpan.</p>}
               </div>
 
-              {/* Link Google Maps dengan Feedback */}
+              {/* Link Google Maps (tanpa Feedback auto-populate) */}
               <div>
-                <label htmlFor="Maps_url" className="block text-sm font-medium mb-1">
+                <label htmlFor="google_maps_url" className="block text-sm font-medium mb-1">
                   Link Google Maps
                 </label>
                 <div className="relative">
-                  <input id="Maps_url" name="Maps_url" value={formData.Maps_url} onChange={handleChange} className="w-full px-3 py-2 border rounded" placeholder="Paste URL Google Maps di sini (link pendek atau panjang)" />
-                  {latLngStatus === "loading" && <FiLoader className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 text-lg animate-spin" title="Mengekstrak koordinat..." />}
-                  {latLngStatus === "success" && <FiCheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-lg" title="Koordinat berhasil diekstrak!" />}
-                  {latLngStatus === "error" && <FiAlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 text-lg" title="URL tidak valid atau koordinat tidak ditemukan." />}
+                  <input id="google_maps_url" name="google_maps_url" value={formData.google_maps_url} onChange={handleChange} className="w-full px-3 py-2 border rounded" placeholder="Paste URL Google Maps di sini" />
+                  {/* Icon validasi dihapus */}
                 </div>
               </div>
             </div>

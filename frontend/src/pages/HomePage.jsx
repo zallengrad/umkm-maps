@@ -1,17 +1,43 @@
 // frontend/src/pages/HomePage.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import UMKMCard from "../components/UMKMCard";
-import MapView from "../components/MapView";
+// Hapus ini: import MapView from "../components/MapView";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { API_BASE_URL } from "../utils/apiConfig";
 
-// ✨ DAFTAR KATEGORI UMKM YANG LENGKAP ✨
-const UMKM_CATEGORIES = ["Kuliner", "Jasa", "Kerajinan / Handmade", "Perdagangan (Retail/Reseller)", "Digital / Kreatif", "Pertanian", "Perikanan & Peternakan", "Kosmetik & Herbal", "Mainan & Edukasi Anak", "Manufaktur Rumahan", "Lainnya"];
+// DAFTAR KATEGORI UMKM YANG LENGKAP (tetap sama)
+const UMKM_CATEGORIES = [
+  "Kuliner",
+  "Jasa",
+  "Kerajinan / Handmade",
+  "Perdagangan (Retail/Reseller)",
+  "Digital / Kreatif",
+  "Pertanian",
+  "Perikanan & Peternakan",
+  "Kosmetik & Herbal",
+  "Mainan & Edukasi Anak",
+  "Manufaktur Rumahan",
+  "Lain nya",
+];
+
+// ✨ DAFTAR DUSUN DI DESA BEJIARUM (Sama dengan di modal) ✨
+const DUSUN_OPTIONS = [
+  "", // Opsi default "Semua Dusun"
+  "Kalicecep",
+  "Beji Jurang",
+  "Beji Dukuh",
+  "Penanggulan",
+  "Berngosan",
+];
 
 const HomePage = () => {
   const [umkmList, setUmkmList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  // ✨ STATE BARU UNTUK FILTER DUSUN ✨
+  const [selectedDusun, setSelectedDusun] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -19,7 +45,7 @@ const HomePage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:3000/umkm");
+      const response = await fetch(`${API_BASE_URL}/umkm`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -41,13 +67,26 @@ const HomePage = () => {
   const filteredUMKM = umkmList.filter((umkm) => {
     const nama = umkm.name || "";
     const kategori = umkm.category || "";
+    const address = umkm.address || ""; // Ambil alamat dari UMKM
+
+    // ✨ LOGIKA BARU UNTUK FILTER DUSUN ✨
+    let cocokDusun = true;
+    if (selectedDusun !== "") {
+      // Coba cek apakah string alamat mengandung nama dusun yang dipilih
+      // Ini adalah parsing string sederhana, bisa kurang akurat jika format alamat tidak konsisten
+      cocokDusun = address.toLowerCase().includes(selectedDusun.toLowerCase());
+      // Jika formatnya "Dusun NamaDusun", bisa pakai:
+      // cocokDusun = address.toLowerCase().includes(`dusun ${selectedDusun.toLowerCase()}`);
+    }
+
     const cocokNama = nama.toLowerCase().includes(searchTerm.toLowerCase());
     const cocokKategori = selectedCategory === "" || kategori === selectedCategory;
-    return cocokNama && cocokKategori;
+
+    return cocokNama && cocokKategori && cocokDusun; // ✨ TAMBAHKAN KONDISI DUSUN ✨
   });
 
-  console.log("HomePage: umkmList (sebelum render MapView):", umkmList);
-  console.log("HomePage: filteredUMKM (sebelum render MapView):", filteredUMKM);
+  console.log("HomePage: umkmList:", umkmList);
+  console.log("HomePage: filteredUMKM:", filteredUMKM);
 
   return (
     <>
@@ -85,22 +124,40 @@ const HomePage = () => {
             placeholder="Cari nama UMKM..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-2/3 border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+            className="w-full md:w-1/3 border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
           />
 
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+            className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             <option value="">Semua Kategori</option>
-            {/* ✨ PERBAIKAN DI SINI: Gunakan UMKM_CATEGORIES untuk opsi select ✨ */}
             {UMKM_CATEGORIES.map((kategori) => (
               <option key={kategori} value={kategori}>
                 {kategori}
               </option>
             ))}
+          </select>
+
+          {/* ✨ SELECT BARU UNTUK FILTER DUSUN ✨ */}
+          <select
+            value={selectedDusun}
+            onChange={(e) => setSelectedDusun(e.target.value)}
+            className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            <option value="">Semua Dusun</option>
+            {DUSUN_OPTIONS.filter((d) => d !== "").map(
+              (
+                dusun // Filter default option
+              ) => (
+                <option key={dusun} value={dusun}>
+                  {dusun}
+                </option>
+              )
+            )}
           </select>
         </div>
       </section>
@@ -128,15 +185,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* MAP SECTION */}
-      <section className="px-4 py-10 bg-white scroll-mt-16" id="peta" data-aos="fade-up" data-aos-delay="200">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Peta UMKM
-          </h2>
-          {loading ? <p className="text-center text-gray-600">Memuat peta...</p> : error ? <p className="text-center text-red-600">Gagal memuat peta.</p> : <MapView umkmList={filteredUMKM} />}
-        </div>
-      </section>
+      {/* MAP SECTION (sudah dihapus) */}
 
       <Footer />
     </>

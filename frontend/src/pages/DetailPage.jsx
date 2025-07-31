@@ -3,16 +3,10 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-// Tambahkan ikon FiClock, FiUser (sudah ada)
 import { FiArrowLeft, FiMapPin, FiPhone, FiInfo, FiClock, FiUser } from "react-icons/fi";
-
-// Import Swiper React components
 import { Swiper, SwiperSlide } from "swiper/react";
-// Import Swiper modules
-import { Autoplay, Pagination } from "swiper/modules"; // ✨ HAPUS NAVIGATION DARI SINI ✨
-// Pastikan CSS Swiper diimpor di main.jsx atau App.jsx
-// import 'swiper/css';
-// import 'swiper/css/pagination'; // Hanya ini jika navigation dihapus
+import { Autoplay, Pagination } from "swiper/modules"; // Hapus Navigation
+import { API_BASE_URL } from "../utils/apiConfig"; // ✨ IMPORT INI ✨
 
 const DetailPage = () => {
   const { id } = useParams();
@@ -20,16 +14,16 @@ const DetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✨ LOGIKA BARU: Cek status login admin ✨
   const isAdminLoggedIn = localStorage.getItem("isLoggedIn") === "true" || sessionStorage.getItem("isLoggedIn") === "true";
-  const backLinkTarget = isAdminLoggedIn ? "/admin" : "/"; // Tentukan tujuan link kembali
+  const backLinkTarget = isAdminLoggedIn ? "/admin" : "/";
 
   useEffect(() => {
     const fetchUMKMDetail = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:3000/umkm/${id}`);
+        // ✨ GANTI URL INI ✨
+        const response = await fetch(`${API_BASE_URL}/umkm/${id}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -91,9 +85,8 @@ const DetailPage = () => {
     );
   }
 
-  // Filter out null/undefined photo URLs and provide a placeholder if needed
   const validPhotos = (umkm.photos || []).filter((url) => url);
-  const displayedPhotos = validPhotos.length > 0 ? validPhotos : ["/images/placeholder-umkm.jpg"]; // Pastikan path placeholder benar
+  const displayedPhotos = validPhotos.length > 0 ? validPhotos : ["/images/placeholder-umkm.jpg"];
 
   return (
     <>
@@ -104,7 +97,7 @@ const DetailPage = () => {
           <div className="relative h-80">
             {displayedPhotos.length > 0 ? (
               <Swiper
-                modules={[Autoplay, Pagination]} // ✨ HAPUS NAVIGATION DARI SINI ✨
+                modules={[Autoplay, Pagination]}
                 spaceBetween={0}
                 slidesPerView={1}
                 autoplay={{
@@ -112,8 +105,6 @@ const DetailPage = () => {
                   disableOnInteraction: false,
                 }}
                 pagination={{ clickable: true }}
-                // ✨ HAPUS BARIS INI UNTUK MENGHILANGKAN TOMBOL NAVIGASI ✨
-                // navigation={true}
                 className="w-full h-full"
               >
                 {displayedPhotos.map((photoUrl, index) => (
@@ -123,7 +114,6 @@ const DetailPage = () => {
                 ))}
               </Swiper>
             ) : (
-              // Jika tidak ada foto sama sekali
               <img src="/images/placeholder-umkm.jpg" alt="No image available" className="w-full h-full object-cover" />
             )}
             <div className="absolute inset-0 bg-black/40 flex items-end p-6 z-10">
@@ -131,7 +121,6 @@ const DetailPage = () => {
                 {umkm.name}
               </h1>
             </div>
-            {/* ✨ UBAH TARGET LINK KEMBALI ✨ */}
             <Link to={backLinkTarget} className="absolute top-4 left-4 text-white text-3xl p-2 rounded-full bg-black/50 hover:bg-black/70 transition z-20">
               <FiArrowLeft />
             </Link>
@@ -143,13 +132,7 @@ const DetailPage = () => {
               <FiInfo className="text-lg text-gray-500" />
               {umkm.category}
             </p>
-            {/* ✨ HAPUS BAGIAN INI UNTUK MENGHILANGKAN NAMA PEMILIK ✨ */}
-            {/* {umkm.owner_name && (
-                <p className="text-sm text-gray-600 mb-4 flex items-center gap-2">
-                    <FiUser className="text-lg text-gray-500"/>
-                    Pemilik: {umkm.owner_name}
-                </p>
-            )} */}
+            {/* Owner name dihapus sesuai permintaan */}
 
             <h2 className="text-xl font-bold text-gray-800 mb-3">Deskripsi</h2>
             <p className="text-gray-700 leading-relaxed mb-6">{umkm.description || "Deskripsi belum tersedia."}</p>
@@ -176,7 +159,6 @@ const DetailPage = () => {
               )}
             </div>
 
-            {/* ✨ PERBAIKAN DI SINI: Gunakan umkm.Maps_url ✨ */}
             {umkm.Maps_url && (
               <div className="mt-4">
                 <a href={umkm.Maps_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition">

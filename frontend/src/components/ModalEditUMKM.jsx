@@ -1,73 +1,88 @@
 // frontend/src/components/ModalEditUMKM.jsx
-import React, { useEffect, useState, useRef } from "react"; // Tambahkan useRef
+import React, { useEffect, useState, useRef } from "react";
 import { uploadToSupabase } from "../utils/uploadToSupabase";
-import { FiCheckCircle, FiAlertCircle, FiLoader, FiXCircle, FiPlus } from "react-icons/fi"; // Tambahkan FiPlus
+import { FiXCircle, FiPlus } from "react-icons/fi";
+import { API_BASE_URL } from "../utils/apiConfig";
 
-// DAFTAR KATEGORI UMKM YANG LENGKAP
-const UMKM_CATEGORIES = [
-  "Kuliner",
-  "Jasa",
-  "Kerajinan / Handmade",
-  "Perdagangan (Retail/Reseller)",
-  "Digital / Kreatif",
-  "Pertanian",
-  "Perikanan & Peternakan",
-  "Kosmetik & Herbal",
-  "Mainan & Edukasi Anak",
-  "Manufaktur Rumahan",
-  "Lain nya",
+// DAFTAR KATEGORI UMKM YANG LENGKAP (Sama dengan AdminPage/HomePage)
+const UMKM_CATEGORIES = ["Kuliner", "Jasa", "Kerajinan / Handmade", "Perdagangan (Retail/Reseller)", "Digital / Kreatif", "Pertanian", "Perikanan & Peternakan", "Kosmetik & Herbal", "Mainan & Edukasi Anak", "Manufaktur Rumahan", "Lainnya"];
+
+// DAFTAR DUSUN DI DESA BEJIARUM (Sama dengan ModalTambahUMKM)
+const DUSUN_OPTIONS = [
+  "", // Opsi default "Pilih Dusun"
+  "Kalicecep",
+  "Beji Jurang",
+  "Beji Dukuh",
+  "Penanggulan",
+  "Berngosan",
 ];
 
 const ModalEditUMKM = ({ umkm, onClose, onSave }) => {
-  // ✨ LOG UNTUK MELIHAT DATA UMKM SAAT MODAL DIBUKA ✨
   console.log("ModalEditUMKM: Menerima UMKM:", umkm);
 
   const [formData, setFormData] = useState({
     name: umkm.name || "",
     category: umkm.category || "",
-    address: umkm.address || "",
-    latitude: umkm.latitude || "",
-    longitude: umkm.longitude || "",
+    // ✨ UBAH INI: rt_rw dan dusun ✨
+    rt_rw: "",
+    dusun: "",
     description: umkm.description || "",
-    Maps_url: umkm.Maps_url || "",
+    Maps_url: umkm.Maps_url || "", // ✨ PERBAIKAN: Maps_url ✨
   });
 
-  // ✨ STATE BARU UNTUK MENGELOLA FOTO (Gabungan existing dan new) ✨
-  const [photosToUpload, setPhotosToUpload] = useState([]); // Array of { file: File|null, url: string }
-  const fileInputRef = useRef(null); // Ref to the hidden file input
+  const [photosToUpload, setPhotosToUpload] = useState([]);
+  const fileInputRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [latLngStatus, setLatLngStatus] = useState("idle");
+  // latLngStatus dihapus
 
-  // Effect untuk mengupdate formData dan photosToUpload saat prop umkm berubah
   useEffect(() => {
     console.log("ModalEditUMKM: useEffect dipicu, umkm:", umkm);
+
+    // ✨ LOGIKA BARU: Ekstrak RT/RW dan Dusun dari string address yang sudah ada ✨
+    let extractedRtRw = "";
+    let extractedDusun = "";
+
+    if (umkm.address) {
+      const addressLower = umkm.address.toLowerCase();
+
+      // Coba ekstrak RT/RW (format "RT.XX/YY" atau "RT XX/YY")
+      const rtRwMatch = addressLower.match(/rt\.?\s*(\d+)\/?r?w?\.?\s*(\d+)?/);
+      if (rtRwMatch && rtRwMatch[1]) {
+        extractedRtRw = `0${parseInt(rtRwMatch[1])}`.slice(-2); // Pastikan 2 digit
+        if (rtRwMatch[2]) {
+          extractedRtRw += `/${`0${parseInt(rtRwMatch[2])}`.slice(-2)}`;
+        }
+      }
+
+      // Coba ekstrak Dusun
+      for (const d of DUSUN_OPTIONS) {
+        if (d && addressLower.includes(d.toLowerCase())) {
+          extractedDusun = d;
+          break;
+        }
+      }
+    }
 
     setFormData({
       name: umkm.name || "",
       category: umkm.category || "",
-      address: umkm.address || "",
-      latitude: umkm.latitude || "",
-      longitude: umkm.longitude || "",
+      rt_rw: extractedRtRw, // ✨ Gunakan hasil ekstraksi ✨
+      dusun: extractedDusun, // ✨ Gunakan hasil ekstraksi ✨
       description: umkm.description || "",
-      Maps_url: umkm.Maps_url || "",
+      Maps_url: umkm.Maps_url || "", // ✨ PERBAIKAN: Maps_url ✨
     });
 
-    // Inisialisasi photosToUpload dengan foto yang sudah ada
-    const initialPhotos = (umkm.photos || [])
-      .map((url) => ({ file: null, url: url || null })) // Mark existing photos as {file: null, url: 'existing_url'}
-      .filter((photo) => photo.url !== null); // Filter out nulls if any
+    const initialPhotos = (umkm.photos || []).map((url) => ({ file: null, url: url || null })).filter((photo) => photo.url !== null);
 
-    // Isi sampai 3 slot, jika kurang, tambahkan slot null
     while (initialPhotos.length < 3) {
       initialPhotos.push({ file: null, url: null });
     }
-    setPhotosToUpload(initialPhotos.slice(0, 3)); // Pastikan hanya 3 slot
+    setPhotosToUpload(initialPhotos.slice(0, 3));
 
-    setLatLngStatus("idle");
+    // latLngStatus dihapus
   }, [umkm]);
 
-  // ✨ FUNGSI UNTUK MENANGANI PILIHAN BANYAK FILE FOTO (Tambah Baru/Ganti Existing) ✨
   const handleFileChange = (e, indexToReplace = null) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -78,144 +93,116 @@ const ModalEditUMKM = ({ umkm, onClose, onSave }) => {
     setPhotosToUpload((prevPhotos) => {
       const updatedPhotos = [...prevPhotos];
 
-      if (indexToReplace !== null && updatedPhotos[indexToReplace]) {
-        // Ganti foto yang ada di slot tertentu
-        if (updatedPhotos[indexToReplace].url) {
-          URL.revokeObjectURL(updatedPhotos[indexToReplace].url); // Hapus URL lama dari memori
-        }
-        updatedPhotos[indexToReplace] = { file: newFile, url: newPreviewUrl };
-      } else {
-        // Tambahkan ke slot kosong pertama atau di akhir
-        const firstEmptyIndex = updatedPhotos.findIndex((p) => p.url === null);
-        if (firstEmptyIndex !== -1 && firstEmptyIndex < 3) {
-          if (updatedPhotos[firstEmptyIndex].url) {
-            URL.revokeObjectURL(updatedPhotos[firstEmptyIndex].url);
-          }
-          updatedPhotos[firstEmptyIndex] = { file: newFile, url: newPreviewUrl };
-        } else if (updatedPhotos.length < 3) {
-          updatedPhotos.push({ file: newFile, url: newPreviewUrl });
-        } else {
-          // Jika sudah 3 dan tidak ada slot kosong, ganti slot pertama (atau berikan pesan error)
-          // Contoh: updatedPhotos[0] = { file: newFile, url: newPreviewUrl };
-          alert("Anda hanya bisa menambahkan hingga 3 foto. Untuk menambah foto baru, hapus salah satu foto yang sudah ada.");
-          return prevPhotos; // Jangan ubah state
+      let targetIndex = indexToReplace;
+      if (targetIndex === null) {
+        targetIndex = updatedPhotos.findIndex((p) => p.url === null);
+        if (targetIndex === -1 && updatedPhotos.length < 3) {
+          targetIndex = updatedPhotos.length;
+        } else if (targetIndex === -1 && updatedPhotos.length === 3) {
+          alert("Anda hanya bisa memiliki hingga 3 foto. Untuk menambah foto baru, hapus salah satu slot foto yang sudah ada.");
+          return prevPhotos;
         }
       }
-      return updatedPhotos.slice(0, 3); // Pastikan tidak lebih dari 3
+
+      if (targetIndex !== null && targetIndex >= 0 && targetIndex < 3) {
+        if (updatedPhotos[targetIndex] && updatedPhotos[targetIndex].url) {
+          URL.revokeObjectURL(updatedPhotos[targetIndex].url);
+        }
+        updatedPhotos[targetIndex] = { file: newFile, url: newPreviewUrl };
+      } else if (updatedPhotos.length < 3) {
+        updatedPhotos.push({ file: newFile, url: newPreviewUrl });
+      } else {
+        alert("Anda hanya bisa memiliki hingga 3 foto. Untuk menambah foto baru, hapus salah satu slot foto yang sudah ada.");
+        return prevPhotos;
+      }
+
+      const finalPhotos = updatedPhotos.filter((p) => p.url !== null || p.file !== null).slice(0, 3);
+      while (finalPhotos.length < 3) {
+        finalPhotos.push({ file: null, url: null });
+      }
+      return finalPhotos;
     });
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Reset input agar file yang sama bisa dipilih lagi
+      fileInputRef.current.value = "";
+      fileInputRef.current.removeAttribute("data-index-to-replace");
     }
   };
 
-  // ✨ FUNGSI BARU UNTUK MENGHAPUS FOTO DARI DAFTAR PRATINJAU ✨
   const handleRemoveFile = (indexToRemove) => {
     setPhotosToUpload((prevPhotos) => {
       const updatedPhotos = [...prevPhotos];
       if (updatedPhotos[indexToRemove] && updatedPhotos[indexToRemove].url) {
-        URL.revokeObjectURL(updatedPhotos[indexToRemove].url); // Hapus URL preview dari memori
+        URL.revokeObjectURL(updatedPhotos[indexToRemove].url);
       }
-      // Set slot menjadi null, jangan dihapus dari array untuk menjaga panjang 3
       updatedPhotos[indexToRemove] = { file: null, url: null };
-      return updatedPhotos;
+
+      const sortedPhotos = updatedPhotos.filter((p) => p.url !== null || p.file !== null);
+      while (sortedPhotos.length < 3) {
+        sortedPhotos.push({ file: null, url: null });
+      }
+
+      return sortedPhotos;
     });
   };
 
-  const handleAddMorePhotos = (index) => {
+  const handleAddOrReplacePhotos = (index) => {
     if (fileInputRef.current) {
-      fileInputRef.current.dataset.indexToReplace = index; // Simpan index slot yang akan diganti
+      fileInputRef.current.dataset.indexToReplace = index;
       fileInputRef.current.click();
     }
   };
 
-  const handleChange = async (e) => {
-    const { name, value, files: inputFiles } = e.target; // Rename 'files' to 'inputFiles'
-
-    // Handle non-file inputs
-    if (name !== "fotoProduk" && name !== "fotoPemilik" && name !== "fotoBebas") {
-      // Ini tidak lagi relevan
-      setFormData((prev) => ({ ...prev, [name]: value }));
-
-      if (name === "Maps_url") {
-        if (value.trim() === "") {
-          setFormData((prev) => ({ ...prev, latitude: "", longitude: "" }));
-          setLatLngStatus("idle");
-          return;
-        }
-
-        setLatLngStatus("loading");
-        try {
-          const response = await fetch(`http://localhost:3000/api/maps/resolve?url=${encodeURIComponent(value)}`);
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          if (data.lat && data.lng) {
-            setFormData((prev) => ({ ...prev, latitude: data.lat.toString(), longitude: data.lng.toString() }));
-            setLatLngStatus("success");
-            setFormData((prev) => ({ ...prev, Maps_url: data.longUrl || value }));
-          } else {
-            throw new Error("Koordinat tidak ditemukan di URL ini.");
-          }
-        } catch (error) {
-          console.error("Gagal mengekstrak koordinat:", error);
-          setFormData((prev) => ({ ...prev, latitude: "", longitude: "" }));
-          setLatLngStatus("error");
-        }
-      }
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    let finalPhotoUrls = []; // Array final dari URL gambar yang akan dikirim ke backend
+    let finalPhotoUrls = [];
 
     try {
-      // Validasi tambahan: Pastikan lat & lng terisi jika URL Maps diisi
-      if (formData.Maps_url && (isNaN(parseFloat(formData.latitude)) || isNaN(parseFloat(formData.longitude)))) {
-        throw new Error("Koordinat Latitude atau Longitude tidak valid dari URL Google Maps. Pastikan URL Maps benar.");
-      }
-
-      // ✨ LOOP UNTUK MENGUPLOAD FILE BARU DAN MENGUMPULKAN URL ✨
       for (const photo of photosToUpload) {
         if (photo.file) {
-          // Jika ada file baru di slot ini
           console.log(`🚀 Mengunggah file baru: ${photo.file.name}...`);
           const url = await uploadToSupabase(photo.file);
           finalPhotoUrls.push(url);
         } else if (photo.url) {
-          // Jika ini adalah foto lama yang tidak diganti
           finalPhotoUrls.push(photo.url);
         } else {
-          // Jika slot kosong (null)
           finalPhotoUrls.push(null);
         }
       }
 
-      // Pastikan array photos memiliki 3 slot (bisa null) untuk konsistensi DB
       while (finalPhotoUrls.length < 3) {
         finalPhotoUrls.push(null);
       }
-      finalPhotoUrls = finalPhotoUrls.slice(0, 3); // Pastikan tidak lebih dari 3
+      finalPhotoUrls = finalPhotoUrls.slice(0, 3);
+
+      // ✨ LOGIKA BARU: Rangkai string 'address' dari input terstruktur ✨
+      let fullAddress = [];
+      if (formData.rt_rw.trim()) {
+        fullAddress.push(`RT.${formData.rt_rw.trim()}`);
+      }
+      if (formData.dusun.trim()) {
+        fullAddress.push(`Dusun ${formData.dusun.trim()}`);
+      }
+      fullAddress.push("Bejiarum, Kec. Kertek, Kabupaten Wonosobo, Jawa Tengah 56371");
+      const finalAddressString = fullAddress.join(", ");
 
       const payload = {
         name: formData.name,
         category: formData.category,
-        address: formData.address,
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude),
-        photos: finalPhotoUrls, // Gunakan array URL gambar final
+        address: finalAddressString, // ✨ GUNAKAN STRING ALAMAT YANG DIRANGKAI ✨
+        photos: finalPhotoUrls,
         description: formData.description,
-        Maps_url: formData.Maps_url,
+        Maps_url: formData.Maps_url, // Tetap kirim linknya
       };
 
-      console.log("📤 Mengirim data UMKM terupdate ke backend:", payload);
-
-      const response = await fetch(`http://localhost:3000/umkm/${umkm.id}`, {
+      const response = await fetch(`${API_BASE_URL}/umkm/${umkm.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -262,24 +249,36 @@ const ModalEditUMKM = ({ umkm, onClose, onSave }) => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Alamat</label>
-                <textarea name="address" value={formData.address} onChange={handleChange} className="w-full border px-3 py-2 rounded" rows={2} />
+              {/* ✨ INPUT BARU: RT/RW dan Dusun ✨ */}
+              <div className="flex gap-4">
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium mb-1">RT/RW (Opsional)</label>
+                  <input name="rt_rw" value={formData.rt_rw} onChange={handleChange} className="w-full border px-3 py-2 rounded" placeholder="Contoh: 01/02" />
+                </div>
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium mb-1">Dusun</label>
+                  <select name="dusun" value={formData.dusun} onChange={handleChange} className="w-full border px-3 py-2 rounded" required>
+                    {DUSUN_OPTIONS.map((dusun) => (
+                      <option key={dusun || "default"} value={dusun}>
+                        {dusun || "Pilih Dusun"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">Deskripsi</label>
                 <textarea name="description" value={formData.description} onChange={handleChange} className="w-full border px-3 py-2 rounded" rows={2} />
               </div>
+
+              {/* ✨ Tampilkan Desa, Kecamatan, Kabupaten, Provinsi otomatis ✨ */}
+              <div className="text-sm text-gray-600">Desa: Bejiarum, Kec. Kertek, Kab. Wonosobo, Jawa Tengah</div>
             </div>
 
             {/* KANAN */}
             <div className="space-y-4">
-              {/* INPUT LATITUDE DAN LONGITUDE DISEM BUNYIKAN! */}
-              <input type="hidden" name="latitude" value={formData.latitude} />
-              <input type="hidden" name="longitude" value={formData.longitude} />
-
-              {/* ✨ MODIFIED PHOTO UPLOAD SECTION (Sama seperti ModalTambah) ✨ */}
+              {/* MODIFIED PHOTO UPLOAD SECTION */}
               <div>
                 <label className="block text-sm font-medium mb-1">Foto UMKM (hingga 3 foto)</label>
                 <input
@@ -288,33 +287,39 @@ const ModalEditUMKM = ({ umkm, onClose, onSave }) => {
                   accept="image/*"
                   multiple // Memungkinkan pemilihan banyak file
                   onChange={(e) => {
-                    // Perlu handler custom karena pakai ref
                     const index = parseInt(fileInputRef.current.dataset.indexToReplace);
                     handleFileChange(e, isNaN(index) ? null : index);
                   }}
-                  className="hidden" // Hide the default file input
+                  className="hidden" // Sembunyikan input default
                 />
                 <div className="flex flex-row gap-2">
                   {photosToUpload.map((photo, index) => (
                     <div key={index} className="relative h-24 w-24">
                       {photo.url ? (
-                        <img src={photo.url} alt={`Preview ${index}`} className="h-full w-full object-cover rounded" />
+                        <img
+                          src={photo.url}
+                          alt={`Preview ${index}`}
+                          className="h-full w-full object-cover rounded cursor-pointer"
+                          onClick={() => handleAddOrReplacePhotos(index)} // Klik gambar untuk mengganti
+                        />
                       ) : (
-                        // Placeholder for empty slots
-                        <div className="h-full w-full border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50 text-gray-400">
+                        <button
+                          type="button"
+                          onClick={() => handleAddOrReplacePhotos(index)} // Klik placeholder untuk menambah
+                          className="h-full w-full border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50 text-gray-400 hover:border-gray-400 hover:text-gray-500 transition"
+                        >
                           <FiPlus size={24} />
-                        </div>
+                        </button>
                       )}
                       <button type="button" onClick={() => handleRemoveFile(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 text-xs" title="Hapus foto">
                         <FiXCircle />
                       </button>
                     </div>
                   ))}
-                  {/* Tombol tambah foto jika belum 3 */}
-                  {photosToUpload.length < 3 && photosToUpload.filter((p) => p.url !== null).length < 3 && (
+                  {photosToUpload.filter((p) => p.url !== null).length < 3 && photosToUpload.length < 3 && (
                     <button
                       type="button"
-                      onClick={() => handleAddMorePhotos(null)} // Panggil dengan null untuk tambah baru
+                      onClick={() => handleAddOrReplacePhotos(null)} // Panggil dengan null untuk tambah baru di slot kosong
                       className="h-24 w-24 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-500 transition"
                     >
                       <FiPlus size={24} />
@@ -323,16 +328,13 @@ const ModalEditUMKM = ({ umkm, onClose, onSave }) => {
                 </div>
               </div>
 
-              {/* Link Google Maps dengan Feedback */}
+              {/* Link Google Maps */}
               <div>
                 <label htmlFor="Maps_url" className="block text-sm font-medium mb-1">
                   Link Google Maps
                 </label>
                 <div className="relative">
-                  <input id="Maps_url" name="Maps_url" value={formData.Maps_url} onChange={handleChange} className="w-full px-3 py-2 border rounded" placeholder="Paste URL Google Maps di sini (link pendek atau panjang)" />
-                  {latLngStatus === "loading" && <FiLoader className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 text-lg animate-spin" title="Mengekstrak koordinat..." />}
-                  {latLngStatus === "success" && <FiCheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-lg" title="Koordinat berhasil diekstrak!" />}
-                  {latLngStatus === "error" && <FiAlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 text-lg" title="URL tidak valid atau koordinat tidak ditemukan." />}
+                  <input id="Maps_url" name="Maps_url" value={formData.Maps_url} onChange={handleChange} className="w-full px-3 py-2 border rounded" placeholder="Paste URL Google Maps di sini" />
                 </div>
               </div>
             </div>

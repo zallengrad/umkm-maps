@@ -7,14 +7,40 @@ import Footer from "../components/Footer";
 import ModalEditUMKM from "../components/ModalEditUMKM";
 import ModalTambahUMKM from "../components/ModalTambahUMKM";
 import ModalConfirmDelete from "../components/ModalConfirmDelete";
+import { API_BASE_URL } from "../utils/apiConfig";
 
-// DAFTAR KATEGORI UMKM YANG LENGKAP
-const UMKM_CATEGORIES = ["Kuliner", "Jasa", "Kerajinan / Handmade", "Perdagangan (Retail/Reseller)", "Digital / Kreatif", "Pertanian", "Perikanan & Peternakan", "Kosmetik & Herbal", "Mainan & Edukasi Anak", "Manufaktur Rumahan", "Lainnya"];
+// DAFTAR KATEGORI UMKM YANG LENGKAP (tetap sama)
+const UMKM_CATEGORIES = [
+  "Kuliner",
+  "Jasa",
+  "Kerajinan / Handmade",
+  "Perdagangan (Retail/Reseller)",
+  "Digital / Kreatif",
+  "Pertanian",
+  "Perikanan & Peternakan",
+  "Kosmetik & Herbal",
+  "Mainan & Edukasi Anak",
+  "Manufaktur Rumahan",
+  "Lain nya",
+];
+
+// ✨ DAFTAR DUSUN DI DESA BEJIARUM (Sama dengan di modal) ✨
+const DUSUN_OPTIONS = [
+  "", // Opsi default "Semua Dusun"
+  "Kalicecep",
+  "Beji Jurang",
+  "Beji Dukuh",
+  "Penanggulan",
+  "Berngosan",
+];
 
 const AdminPage = () => {
   const [umkmList, setUmkmList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  // ✨ STATE BARU UNTUK FILTER DUSUN ✨
+  const [selectedDusun, setSelectedDusun] = useState("");
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUMKM, setSelectedUMKM] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -25,11 +51,13 @@ const AdminPage = () => {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [umkmToDelete, setUmkmToDelete] = useState(null);
 
+  const [showLogoutConfirmModal, setShowLogoutConfirmModal] = useState(false);
+
   const fetchUMKMs = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:3000/umkm");
+      const response = await fetch(`${API_BASE_URL}/umkm`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -45,7 +73,6 @@ const AdminPage = () => {
   }, []);
 
   useEffect(() => {
-    // ✨ PERUBAHAN DI SINI: Cek di localStorage ATAU sessionStorage ✨
     const isLoggedIn = localStorage.getItem("isLoggedIn") || sessionStorage.getItem("isLoggedIn");
     if (!isLoggedIn) {
       navigate("/login");
@@ -57,9 +84,19 @@ const AdminPage = () => {
   const filteredUMKM = umkmList.filter((umkm) => {
     const nama = umkm.name || "";
     const kategori = umkm.category || "";
+    const address = umkm.address || ""; // Ambil alamat dari UMKM
+
+    // ✨ LOGIKA BARU UNTUK FILTER DUSUN ✨
+    let cocokDusun = true;
+    if (selectedDusun !== "") {
+      // Coba cek apakah string alamat mengandung nama dusun yang dipilih
+      cocokDusun = address.toLowerCase().includes(selectedDusun.toLowerCase());
+    }
+
     const cocokNama = nama.toLowerCase().includes(searchTerm.toLowerCase());
     const cocokKategori = selectedCategory === "" || kategori === selectedCategory;
-    return cocokNama && cocokKategori;
+
+    return cocokNama && cocokKategori && cocokDusun; // ✨ TAMBAHKAN KONDISI DUSUN ✨
   });
 
   const handleEdit = (umkm) => {
@@ -69,7 +106,7 @@ const AdminPage = () => {
 
   const handleSaveEdit = async (updatedUMKM) => {
     try {
-      const response = await fetch(`http://localhost:3000/umkm/${updatedUMKM.id}`, {
+      const response = await fetch(`${API_BASE_URL}/umkm/${updatedUMKM.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUMKM),
@@ -97,7 +134,7 @@ const AdminPage = () => {
     if (!umkmToDelete) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/umkm/${umkmToDelete.id}`, {
+      const response = await fetch(`${API_BASE_URL}/umkm/${umkmToDelete.id}`, {
         method: "DELETE",
       });
       if (!response.ok) {
@@ -125,12 +162,26 @@ const AdminPage = () => {
     setShowAddModal(false);
   };
 
-  // ✨ LOGIKA BARU: Kumpulkan kategori yang ada datanya di umkmList ✨
+  const handleLogoutAttempt = () => {
+    setShowLogoutConfirmModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    sessionStorage.removeItem("isLoggedIn");
+    navigate("/login");
+    setShowLogoutConfirmModal(false);
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutConfirmModal(false);
+  };
+
   const categoriesWithData = new Set(umkmList.map((u) => u.category));
 
   return (
     <>
-      <Navbar />
+      <Navbar onLogoutClick={handleLogoutAttempt} />
 
       {/* ADMIN DASHBOARD HEADER */}
       <section className="pt-24 px-4 bg-white">
@@ -147,7 +198,7 @@ const AdminPage = () => {
             </div>
             <div className="bg-blue-100 text-blue-800 px-4 py-4 rounded-lg shadow-sm text-center">
               <div className="text-sm font-medium">Jumlah Kategori</div>
-              <div className="text-4xl font-bold">{loading ? "..." : categoriesWithData.size}</div> {/* Gunakan categoriesWithData.size */}
+              <div className="text-4xl font-bold">{loading ? "..." : categoriesWithData.size}</div>
             </div>
           </div>
 
@@ -158,13 +209,9 @@ const AdminPage = () => {
               {loading ? (
                 <p>Memuat kategori...</p>
               ) : (
-                // ✨ PERUBAHAN DI SINI: Terapkan warna berdasarkan apakah kategori punya data ✨
                 UMKM_CATEGORIES.map((kategori) => {
                   const hasData = categoriesWithData.has(kategori);
-                  const categoryClass = hasData
-                    ? "bg-green-200 text-green-800" // Warna hijau jika ada data
-                    : "bg-gray-200 text-gray-800"; // Warna abu-abu jika tidak ada data
-
+                  const categoryClass = hasData ? "bg-green-200 text-green-800" : "bg-gray-200 text-gray-800";
                   return (
                     <span key={kategori} className={`${categoryClass} px-3 py-1 rounded-full text-sm font-medium`}>
                       {kategori}
@@ -182,12 +229,12 @@ const AdminPage = () => {
               placeholder="Cari nama UMKM..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full md:w-2/3 border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              className="w-full md:w-1/3 border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
             />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
               style={{ fontFamily: "Inter, sans-serif" }}
             >
               <option value="">Semua Kategori</option>
@@ -196,6 +243,25 @@ const AdminPage = () => {
                   {kategori}
                 </option>
               ))}
+            </select>
+
+            {/* ✨ SELECT BARU UNTUK FILTER DUSUN ✨ */}
+            <select
+              value={selectedDusun}
+              onChange={(e) => setSelectedDusun(e.target.value)}
+              className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              <option value="">Semua Dusun</option>
+              {DUSUN_OPTIONS.filter((d) => d !== "").map(
+                (
+                  dusun // Filter default option
+                ) => (
+                  <option key={dusun} value={dusun}>
+                    {dusun}
+                  </option>
+                )
+              )}
             </select>
           </div>
         </div>
@@ -239,6 +305,9 @@ const AdminPage = () => {
 
       {/* MODAL KONFIRMASI DELETE */}
       {showDeleteConfirmModal && umkmToDelete && <ModalConfirmDelete itemName={umkmToDelete.name} onConfirm={handleConfirmDelete} onCancel={handleCancelDelete} />}
+
+      {/* MODAL KONFIRMASI LOGOUT */}
+      {showLogoutConfirmModal && <ModalConfirmDelete itemName="keluar dari Dashboard Admin" onConfirm={handleConfirmLogout} onCancel={handleCancelLogout} />}
     </>
   );
 };
