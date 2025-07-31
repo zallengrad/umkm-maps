@@ -8,8 +8,9 @@ import ModalEditUMKM from "../components/ModalEditUMKM";
 import ModalTambahUMKM from "../components/ModalTambahUMKM";
 import ModalConfirmDelete from "../components/ModalConfirmDelete";
 import { API_BASE_URL } from "../utils/apiConfig";
+import { supabase } from "../utils/supabaseClient";
 
-// DAFTAR KATEGORI UMKM YANG LENGKAP (tetap sama)
+// DAFTAR KATEGORI UMKM YANG LENGKAP
 const UMKM_CATEGORIES = [
   "Kuliner",
   "Jasa",
@@ -24,7 +25,7 @@ const UMKM_CATEGORIES = [
   "Lain nya",
 ];
 
-// ✨ DAFTAR DUSUN DI DESA BEJIARUM (Sama dengan di modal) ✨
+// ✨ DAFTAR DUSUN DI DESA BEJIARUM (Sudah Benar) ✨
 const DUSUN_OPTIONS = [
   "", // Opsi default "Semua Dusun"
   "Kalicecep",
@@ -38,8 +39,7 @@ const AdminPage = () => {
   const [umkmList, setUmkmList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  // ✨ STATE BARU UNTUK FILTER DUSUN ✨
-  const [selectedDusun, setSelectedDusun] = useState("");
+  const [selectedDusun, setSelectedDusun] = useState(""); // State untuk filter dusun
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUMKM, setSelectedUMKM] = useState(null);
@@ -84,19 +84,18 @@ const AdminPage = () => {
   const filteredUMKM = umkmList.filter((umkm) => {
     const nama = umkm.name || "";
     const kategori = umkm.category || "";
-    const address = umkm.address || ""; // Ambil alamat dari UMKM
+    const address = umkm.address || "";
 
-    // ✨ LOGIKA BARU UNTUK FILTER DUSUN ✨
+    // Logika untuk filter dusun (sudah benar)
     let cocokDusun = true;
     if (selectedDusun !== "") {
-      // Coba cek apakah string alamat mengandung nama dusun yang dipilih
       cocokDusun = address.toLowerCase().includes(selectedDusun.toLowerCase());
     }
 
     const cocokNama = nama.toLowerCase().includes(searchTerm.toLowerCase());
     const cocokKategori = selectedCategory === "" || kategori === selectedCategory;
 
-    return cocokNama && cocokKategori && cocokDusun; // ✨ TAMBAHKAN KONDISI DUSUN ✨
+    return cocokNama && cocokKategori && cocokDusun; // Menyertakan kondisi dusun
   });
 
   const handleEdit = (umkm) => {
@@ -166,11 +165,24 @@ const AdminPage = () => {
     setShowLogoutConfirmModal(true);
   };
 
-  const handleConfirmLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    sessionStorage.removeItem("isLoggedIn");
-    navigate("/login");
-    setShowLogoutConfirmModal(false);
+  const handleConfirmLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error logging out from Supabase:", error);
+        alert("Gagal logout dari Supabase: " + error.message);
+      } else {
+        console.log("Successfully logged out from Supabase.");
+      }
+    } catch (err) {
+      console.error("Unexpected error during logout:", err);
+      alert("Terjadi kesalahan saat logout.");
+    } finally {
+      localStorage.removeItem("isLoggedIn");
+      sessionStorage.removeItem("isLoggedIn");
+      navigate("/login");
+      setShowLogoutConfirmModal(false);
+    }
   };
 
   const handleCancelLogout = () => {
@@ -229,12 +241,12 @@ const AdminPage = () => {
               placeholder="Cari nama UMKM..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full md:w-1/3 border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
+              className="w-full md:w-1/3 border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
             />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
+              className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
               style={{ fontFamily: "Inter, sans-serif" }}
             >
               <option value="">Semua Kategori</option>
@@ -245,23 +257,19 @@ const AdminPage = () => {
               ))}
             </select>
 
-            {/* ✨ SELECT BARU UNTUK FILTER DUSUN ✨ */}
+            {/* SELECT BARU UNTUK FILTER DUSUN */}
             <select
               value={selectedDusun}
               onChange={(e) => setSelectedDusun(e.target.value)}
-              className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
+              className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
               style={{ fontFamily: "Inter, sans-serif" }}
             >
               <option value="">Semua Dusun</option>
-              {DUSUN_OPTIONS.filter((d) => d !== "").map(
-                (
-                  dusun // Filter default option
-                ) => (
-                  <option key={dusun} value={dusun}>
-                    {dusun}
-                  </option>
-                )
-              )}
+              {DUSUN_OPTIONS.filter((d) => d !== "").map((dusun) => (
+                <option key={dusun} value={dusun}>
+                  {dusun}
+                </option>
+              ))}
             </select>
           </div>
         </div>

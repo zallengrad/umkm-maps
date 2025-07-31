@@ -4,13 +4,29 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// ✨ TAMBAHKAN INI UNTUK DEBUGGING! ✨
-console.log("Supabase URL:", supabaseUrl);
-console.log("Supabase Anon Key:", supabaseAnonKey ? "Ada (tidak ditampilkan)" : "Tidak ada!"); // Hindari menampilkan key utuh
-
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("🚨🚨 ERROR: Supabase URL atau Anon Key belum diatur di variabel lingkungan (misal: .env.local)!");
-  alert("Konfigurasi Supabase belum lengkap! Cek console browser Anda.");
+  console.error("🚨🚨 ERROR: Pastikan VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY ada di file .env.local frontend Anda!");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// ✨ FUNGSI INI AKAN MENENTUKAN TEMPAT PENYIMPANAN SUPABASE AUTH ✨
+const getAuthStorage = () => {
+  // Jika 'isLoggedIn' di localStorage (setelah login Remember Me) ada dan true, gunakan localStorage.
+  // Jika tidak, gunakan sessionStorage.
+  // Ini mengontrol di mana Supabase menyimpan refresh token-nya.
+  const rememberMeFlag = localStorage.getItem("isLoggedIn");
+  if (rememberMeFlag === "true") {
+    return localStorage;
+  }
+  return sessionStorage;
+};
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: getAuthStorage(), // ✨ GUNAKAN FUNGSI INI! ✨
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});
+
+console.log("Supabase Client Frontend Terinisialisasi.");
