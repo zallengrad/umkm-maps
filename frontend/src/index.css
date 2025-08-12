@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/* frontend/src/index.css */
+
 html {
-  overflow-y: scroll;
+  overflow-y: scroll; /* Hanya satu kali definisi */
 }

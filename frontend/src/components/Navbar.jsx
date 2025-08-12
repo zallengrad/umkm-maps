@@ -7,10 +7,7 @@ const Navbar = ({ onLogoutClick }) => {
   const navigate = useNavigate();
 
   const isLoginPage = location.pathname === "/login";
-  // ✨ PERBAIKAN DI SINI: Tangani trailing slash untuk isAdminPage ✨
-  const isAdminPage = location.pathname === "/admin" || location.pathname === "/admin/";
-  // Alternatif yang lebih kuat: location.pathname.startsWith("/admin") && (location.pathname.length === 6 || location.pathname.length === 7)
-
+  const isAdminPage = location.pathname === "/admin" || location.pathname.startsWith("/admin/");
   const isHomePage = location.pathname === "/";
   const isDetailPage = location.pathname.startsWith("/umkm/");
 
@@ -29,23 +26,23 @@ const Navbar = ({ onLogoutClick }) => {
   let rightButton = null;
 
   if (isLoginPage) {
+    // Tombol di halaman login tetap Home
     rightButton = (
       <Link to="/" className="text-sm font-medium text-white bg-[#F59E0B] px-4 py-2 rounded-lg hover:bg-yellow-600 transition" style={{ fontFamily: "Inter, sans-serif" }}>
         Home
       </Link>
     );
-  } else if (isDetailPage) {
-    rightButton = null;
   } else if (isAdminPage) {
-    // Blok ini sekarang akan terpanggil untuk /admin dan /admin/
+    // Tombol di halaman admin adalah Logout
     rightButton = (
       <button onClick={finalLogoutHandler} className="text-sm font-medium text-white bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition cursor-pointer" style={{ fontFamily: "Inter, sans-serif" }}>
         Logout
       </button>
     );
-  } else if (isHomePage) {
+  } else if (isHomePage || isDetailPage) {
+    // Tombol di halaman utama dan detail adalah Login
     rightButton = (
-      <Link to="/login" className="text-sm font-medium text-white bg-[#F59E0B] px-4 py-2 rounded-lg hover:bg-yellow-600 transition" style={{ fontFamily: "Inter, sans-serif" }}>
+      <Link to="/login" className="text-sm font-medium text-white bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition" style={{ fontFamily: "Inter, sans-serif" }}>
         Login
       </Link>
     );
@@ -53,10 +50,12 @@ const Navbar = ({ onLogoutClick }) => {
 
   return (
     <header className="fixed top-0 w-full z-50">
-      <div className="backdrop-blur-md bg-white/30 border-b border-white/20 shadow-sm">
+      {/* ✨ PERUBAHAN DI SINI: Ganti style Navbar ✨ */}
+      {/* Warna background solid, bukan lagi glassmorphism */}
+      <div className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
           {/* Judul / Logo */}
-          <Link to={logoTarget} className="text-xl md:text-2xl font-bold text-[#F59E0B]" style={{ fontFamily: "Poppins, sans-serif" }}>
+          <Link to={logoTarget} className="text-xl md:text-2xl font-bold text-gray-800" style={{ fontFamily: "Poppins, sans-serif" }}>
             UMKM Bejiarum
           </Link>
 

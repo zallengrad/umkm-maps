@@ -35,11 +35,14 @@ const HomePage = () => {
   const [umkmList, setUmkmList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  // ✨ STATE BARU UNTUK FILTER DUSUN ✨
   const [selectedDusun, setSelectedDusun] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // ✨ STATE BARU UNTUK PAGINATION ✨
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12); // Kamu bisa ubah jumlahnya di sini
 
   const fetchUMKMs = useCallback(async () => {
     setLoading(true);
@@ -64,29 +67,36 @@ const HomePage = () => {
     fetchUMKMs();
   }, [fetchUMKMs]);
 
+  // ✨ SET Halaman kembali ke 1 setiap kali filter atau pencarian berubah ✨
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, selectedDusun]);
+
   const filteredUMKM = umkmList.filter((umkm) => {
     const nama = umkm.name || "";
     const kategori = umkm.category || "";
     const address = umkm.address || ""; // Ambil alamat dari UMKM
 
-    // ✨ LOGIKA BARU UNTUK FILTER DUSUN ✨
     let cocokDusun = true;
     if (selectedDusun !== "") {
-      // Coba cek apakah string alamat mengandung nama dusun yang dipilih
-      // Ini adalah parsing string sederhana, bisa kurang akurat jika format alamat tidak konsisten
       cocokDusun = address.toLowerCase().includes(selectedDusun.toLowerCase());
-      // Jika formatnya "Dusun NamaDusun", bisa pakai:
-      // cocokDusun = address.toLowerCase().includes(`dusun ${selectedDusun.toLowerCase()}`);
     }
 
     const cocokNama = nama.toLowerCase().includes(searchTerm.toLowerCase());
     const cocokKategori = selectedCategory === "" || kategori === selectedCategory;
 
-    return cocokNama && cocokKategori && cocokDusun; // ✨ TAMBAHKAN KONDISI DUSUN ✨
+    return cocokNama && cocokKategori && cocokDusun;
   });
+
+  // ✨ LOGIKA PAGINATION BARU ✨
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredUMKM.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUMKM.length / itemsPerPage);
 
   console.log("HomePage: umkmList:", umkmList);
   console.log("HomePage: filteredUMKM:", filteredUMKM);
+  console.log("HomePage: currentItems:", currentItems);
 
   return (
     <>
@@ -124,13 +134,13 @@ const HomePage = () => {
             placeholder="Cari nama UMKM..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-1/3 border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
+            className="w-full md:w-1/3 border border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-800 transition"
           />
 
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
+            className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-800 transition"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             <option value="">Semua Kategori</option>
@@ -145,7 +155,7 @@ const HomePage = () => {
           <select
             value={selectedDusun}
             onChange={(e) => setSelectedDusun(e.target.value)}
-            className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition" // Sesuaikan lebar
+            className="w-full md:w-1/3 bg-white border border-gray-300 rounded-lg px-4 py-2 shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-800 transition"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             <option value="">Semua Dusun</option>
@@ -176,16 +186,78 @@ const HomePage = () => {
           ) : filteredUMKM.length === 0 ? (
             <p className="text-gray-500 text-center col-span-full">😞 Tidak ada UMKM yang cocok dengan pencarian.</p>
           ) : (
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-              {filteredUMKM.map((umkm) => (
-                <UMKMCard key={umkm.id || umkm.name} umkm={umkm} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+                {currentItems.map((umkm) => (
+                  <UMKMCard key={umkm.id || umkm.name} umkm={umkm} />
+                ))}
+              </div>
+
+              {/* ✨ PERUBAHAN DI SINI: PAGINATION DENGAN TOMBOL ANGKA TERBATAS & TEKS ✨ */}
+              {totalPages > 1 && (
+                <div className="flex flex-col items-center mt-8 space-y-2">
+                  {/* TOMBOL PAGING BARIS ATAS */}
+                  <div className="flex justify-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 rounded-lg bg-gray-300 text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition hover:bg-gray-400 font-bold"
+                    >
+                      &lt;
+                    </button>
+
+                    {/* LOGIKA UNTUK MENAMPILKAN MAKSIMAL 3 TOMBOL */}
+                    {
+                      // Buat array dari nomor halaman yang akan ditampilkan
+                      (() => {
+                        const pageNumbers = [];
+                        let startPage = Math.max(1, currentPage - 1);
+                        let endPage = Math.min(totalPages, currentPage + 1);
+
+                        // Jika di halaman awal, tampilkan 1, 2, 3
+                        if (currentPage === 1) {
+                          endPage = Math.min(totalPages, 3);
+                        }
+                        // Jika di halaman akhir, tampilkan (akhir-2), (akhir-1), akhir
+                        else if (currentPage === totalPages) {
+                          startPage = Math.max(1, totalPages - 2);
+                        }
+
+                        for (let i = startPage; i <= endPage; i++) {
+                          pageNumbers.push(i);
+                        }
+
+                        return pageNumbers.map((number) => (
+                          <button
+                            key={number}
+                            onClick={() => setCurrentPage(number)}
+                            className={`px-3 py-1 rounded-lg ${currentPage === number ? "bg-gray-800 text-white font-bold" : "bg-gray-300 text-gray-800"} transition hover:bg-gray-400`}
+                          >
+                            {number}
+                          </button>
+                        ));
+                      })()
+                    }
+
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 rounded-lg bg-gray-300 text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition hover:bg-gray-400 font-bold"
+                    >
+                      &gt;
+                    </button>
+                  </div>
+
+                  {/* TEKS HALAMAN BARIS BAWAH */}
+                  <span className="text-sm text-gray-500" style={{ fontFamily: "Inter, sans-serif" }}>
+                    page {currentPage} of {totalPages}
+                  </span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
-
-      {/* MAP SECTION (sudah dihapus) */}
 
       <Footer />
     </>
