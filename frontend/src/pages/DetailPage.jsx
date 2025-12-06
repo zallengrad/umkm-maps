@@ -7,6 +7,7 @@ import { FiArrowLeft, FiMapPin, FiPhone, FiInfo, FiClock, FiUser } from "react-i
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules"; // Hapus Navigation
 import { API_BASE_URL } from "../utils/apiConfig"; // ✨ IMPORT INI ✨
+import { getGalleryImage } from "../utils/imageOptimizer";
 
 const DetailPage = () => {
   const { id } = useParams();
@@ -86,7 +87,10 @@ const DetailPage = () => {
   }
 
   const validPhotos = (umkm.photos || []).filter((url) => url);
-  const displayedPhotos = validPhotos.length > 0 ? validPhotos : ["/images/placeholder-umkm.jpg"];
+  // Optimasi gambar untuk gallery
+  const displayedPhotos = validPhotos.length > 0 
+    ? validPhotos.map(url => getGalleryImage(url))
+    : ["/images/placeholder-umkm.jpg"];
 
   return (
     <>
@@ -109,12 +113,30 @@ const DetailPage = () => {
               >
                 {displayedPhotos.map((photoUrl, index) => (
                   <SwiperSlide key={index}>
-                    <img src={photoUrl} alt={`${umkm.name} - Foto ${index + 1}`} className="w-full h-full object-cover" />
+                    <img 
+                      src={photoUrl} 
+                      alt={`${umkm.name} - Foto ${index + 1}`} 
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null; // Prevent infinite loop
+                        e.target.src = "/images/placeholder-umkm.jpg";
+                      }}
+                    />
                   </SwiperSlide>
                 ))}
               </Swiper>
             ) : (
-              <img src="/images/placeholder-umkm.jpg" alt="No image available" className="w-full h-full object-cover" />
+              <img 
+                src="/images/placeholder-umkm.jpg" 
+                alt="No image available" 
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/images/placeholder-umkm.jpg";
+                }}
+              />
             )}
             <div className="absolute inset-0 bg-black/40 flex items-end p-6 z-10">
               <h1 className="text-4xl font-extrabold text-white drop-shadow-lg" style={{ fontFamily: "Poppins, sans-serif" }}>

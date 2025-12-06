@@ -39,14 +39,8 @@ const Navbar = ({ onLogoutClick }) => {
         Logout
       </button>
     );
-  } else if (isHomePage || isDetailPage) {
-    // Tombol di halaman utama dan detail adalah Login
-    rightButton = (
-      <Link to="/login" className="text-sm font-medium text-white bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition" style={{ fontFamily: "Inter, sans-serif" }}>
-        Login
-      </Link>
-    );
   }
+  // Tombol login dihilangkan untuk halaman utama dan detail
 
   return (
     <header className="fixed top-0 w-full z-50">

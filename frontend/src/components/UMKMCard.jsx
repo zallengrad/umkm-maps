@@ -4,13 +4,17 @@ import { FiMapPin } from "react-icons/fi"; // Kita cuma butuh FiMapPin, yang lai
 import { useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
+import { getCardThumbnail } from "../utils/imageOptimizer";
 
 const UMKMCard = ({ umkm, isAdmin = false, onEdit, onDelete }) => {
   const navigate = useNavigate();
 
   const validPhotos = (umkm.photos || []).filter((url) => url);
   const defaultImageUrl = "/images/placeholder-umkm.jpg";
-  const displayedPhotos = validPhotos.length > 0 ? validPhotos : [defaultImageUrl];
+  // Optimasi gambar untuk card thumbnail
+  const displayedPhotos = validPhotos.length > 0 
+    ? validPhotos.map(url => getCardThumbnail(url))
+    : [defaultImageUrl];
 
   const handleCardClick = () => {
     navigate(`/umkm/${umkm.id}`);
@@ -47,7 +51,16 @@ const UMKMCard = ({ umkm, isAdmin = false, onEdit, onDelete }) => {
         >
           {displayedPhotos.map((photoUrl, index) => (
             <SwiperSlide key={index}>
-              <img src={photoUrl} alt={`${umkm.name} - Foto ${index + 1}`} className="w-full h-full object-cover" />
+              <img 
+                src={photoUrl} 
+                alt={`${umkm.name} - Foto ${index + 1}`} 
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  e.target.onerror = null; // Prevent infinite loop
+                  e.target.src = defaultImageUrl;
+                }}
+              />
             </SwiperSlide>
           ))}
         </Swiper>
