@@ -3,10 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { FiArrowLeft, FiMapPin, FiPhone, FiInfo, FiClock, FiUser } from "react-icons/fi";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination } from "swiper/modules"; // Hapus Navigation
-import { API_BASE_URL } from "../utils/apiConfig"; // ✨ IMPORT INI ✨
+import { FiChevronLeft, FiChevronRight, FiMapPin, FiPhone, FiClock, FiInfo } from "react-icons/fi";
+import { API_BASE_URL } from "../utils/apiConfig";
 import { getGalleryImage } from "../utils/imageOptimizer";
 import { DetailSkeleton } from "../components/LoadingSkeleton";
 
@@ -15,6 +13,7 @@ const DetailPage = () => {
   const [umkm, setUmkm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const isAdminLoggedIn = localStorage.getItem("isLoggedIn") === "true" || sessionStorage.getItem("isLoggedIn") === "true";
   const backLinkTarget = isAdminLoggedIn ? "/admin" : "/";
@@ -24,7 +23,6 @@ const DetailPage = () => {
       setLoading(true);
       setError(null);
       try {
-        // ✨ GANTI URL INI ✨
         const response = await fetch(`${API_BASE_URL}/umkm/${id}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -88,112 +86,141 @@ const DetailPage = () => {
   }
 
   const validPhotos = (umkm.photos || []).filter((url) => url);
-  // Optimasi gambar untuk gallery
   const displayedPhotos = validPhotos.length > 0 
     ? validPhotos.map(url => getGalleryImage(url))
     : ["/images/placeholder-umkm.jpg"];
 
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % displayedPhotos.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + displayedPhotos.length) % displayedPhotos.length);
+  };
+
   return (
-    <>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <section className="pt-24 px-4 py-10 bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
-          {/* Header & Gambar (Menggunakan Swiper) */}
-          <div className="relative h-80">
-            {displayedPhotos.length > 0 ? (
-              <Swiper
-                modules={[Autoplay, Pagination]}
-                spaceBetween={0}
-                slidesPerView={1}
-                autoplay={{
-                  delay: 3500,
-                  disableOnInteraction: false,
-                }}
-                pagination={{ clickable: true }}
-                className="w-full h-full"
-              >
-                {displayedPhotos.map((photoUrl, index) => (
-                  <SwiperSlide key={index}>
-                    <img 
-                      src={photoUrl} 
-                      alt={`${umkm.name} - Foto ${index + 1}`} 
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      onError={(e) => {
-                        e.target.onerror = null; // Prevent infinite loop
-                        e.target.src = "/images/placeholder-umkm.jpg";
-                      }}
-                    />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            ) : (
-              <img 
-                src="/images/placeholder-umkm.jpg" 
-                alt="No image available" 
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/images/placeholder-umkm.jpg";
-                }}
-              />
-            )}
-            <div className="absolute inset-0 bg-black/40 flex items-end p-6 z-10">
-              <h1 className="text-4xl font-extrabold text-white drop-shadow-lg" style={{ fontFamily: "Poppins, sans-serif" }}>
-                {umkm.name}
-              </h1>
-            </div>
-            <Link to={backLinkTarget} className="absolute top-4 left-4 text-white text-3xl p-2 rounded-full bg-black/50 hover:bg-black/70 transition z-20">
-              <FiArrowLeft />
-            </Link>
-          </div>
+      
+      {/* Hero Section with Carousel */}
+      <div className="relative w-full h-screen">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0">
+          <img
+            src={displayedPhotos[currentSlide]}
+            alt={`${umkm.name} - Slide ${currentSlide + 1}`}
+            className="w-full h-full object-cover transition-opacity duration-500"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/30"></div>
+        </div>
 
-          {/* Detail Info */}
-          <div className="p-6">
-            <p className="text-sm text-gray-600 mb-4 flex items-center gap-2">
-              <FiInfo className="text-lg text-gray-500" />
-              {umkm.category}
+        {/* Navigation Buttons - Only show if more than 1 photo */}
+        {displayedPhotos.length > 1 && (
+          <>
+            <button
+              onClick={prevSlide}
+              className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full transition-all duration-300"
+              aria-label="Previous slide"
+            >
+              <FiChevronLeft className="w-6 h-6" />
+            </button>
+
+            <button
+              onClick={nextSlide}
+              className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full transition-all duration-300"
+              aria-label="Next slide"
+            >
+              <FiChevronRight className="w-6 h-6" />
+            </button>
+          </>
+        )}
+
+        {/* Content */}
+        <div className="relative z-10 h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
+          <div className="max-w-3xl pt-20">
+            {/* Category Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 mb-6">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span className="text-white text-sm font-medium">{umkm.category || "UMKM"}</span>
+            </div>
+
+            {/* Title */}
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+              {umkm.name}
+            </h1>
+
+            {/* Description */}
+            <p className="text-lg sm:text-xl text-gray-200 mb-8 leading-relaxed line-clamp-4">
+              {umkm.description || "Deskripsi belum tersedia."}
             </p>
-            {/* Owner name dihapus sesuai permintaan */}
 
-            <h2 className="text-xl font-bold text-gray-800 mb-3">Deskripsi</h2>
-            <p className="text-gray-700 leading-relaxed mb-6">{umkm.description || "Deskripsi belum tersedia."}</p>
-
-            <h2 className="text-xl font-bold text-gray-800 mb-3">Informasi Kontak & Lokasi</h2>
-            <div className="space-y-3 mb-6">
+            {/* Details Grid */}
+            <div className="grid gap-4 mb-8 text-gray-300">
               {umkm.address && (
-                <p className="flex items-center gap-2 text-gray-700">
-                  <FiMapPin className="text-lg text-blue-500" />
-                  {umkm.address}
-                </p>
+                <div className="flex items-start gap-3">
+                  <FiMapPin className="w-5 h-5 mt-1 flex-shrink-0 text-blue-400" />
+                  <p className="text-base leading-relaxed">{umkm.address}</p>
+                </div>
               )}
+              
               {umkm.kontak && (
-                <p className="flex items-center gap-2 text-gray-700">
-                  <FiPhone className="text-lg text-green-500" />
-                  {umkm.kontak}
-                </p>
+                <div className="flex items-center gap-3">
+                  <FiPhone className="w-5 h-5 flex-shrink-0 text-green-400" />
+                  <p className="text-base">{umkm.kontak}</p>
+                </div>
               )}
+
               {umkm.jam_buka && umkm.jam_tutup && (
-                <p className="flex items-center gap-2 text-gray-700">
-                  <FiClock className="text-lg text-purple-500" />
-                  Jam Buka: {umkm.jam_buka} - {umkm.jam_tutup}
-                </p>
+                <div className="flex items-center gap-3">
+                  <FiClock className="w-5 h-5 flex-shrink-0 text-purple-400" />
+                  <p className="text-base">Jam Buka: {umkm.jam_buka} - {umkm.jam_tutup}</p>
+                </div>
               )}
             </div>
 
-            {umkm.Maps_url && (
-              <div className="mt-4">
-                <a href={umkm.Maps_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition">
-                  <FiMapPin className="mr-2" /> Lihat di Google Maps
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap gap-4">
+              {umkm.Maps_url && (
+                <a 
+                  href={umkm.Maps_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <FiMapPin className="w-5 h-5" />
+                  Lihat di Google Maps
                 </a>
-              </div>
-            )}
+              )}
+              
+              {/* Optional: Add Contact Button if needed */}
+              {/* <button className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 backdrop-blur-sm border border-white/30">
+                <FiPhone className="w-5 h-5" />
+                Hubungi Penjual
+              </button> */}
+            </div>
           </div>
         </div>
-      </section>
+
+        {/* Slide Indicators */}
+        {displayedPhotos.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+            {displayedPhotos.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/40'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* Footer is outside the hero, might need adjustment if footer should be visible without scrolling, but hero is h-screen so footer is below fold */}
       <Footer />
-    </>
+    </div>
   );
 };
 
