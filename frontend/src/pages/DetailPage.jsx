@@ -217,8 +217,46 @@ const DetailPage = () => {
           </div>
         )}
       </div>
+
+
+      {/* Google Maps Preview Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Lokasi Kami</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Kunjungi kami langsung di lokasi. Klik peta untuk navigasi lebih detail.
+            </p>
+          </div>
+          
+          <div className="bg-gray-100 rounded-2xl overflow-hidden shadow-lg h-96 w-full relative">
+            <iframe
+              title="Google Maps Preview"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              scrolling="no"
+              marginHeight="0"
+              marginWidth="0"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent((umkm.name || "") + " " + (umkm.address || ""))}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+              className="w-full h-full"
+            ></iframe>
+            
+            {/* Overlay for interaction hint if needed, or just keep it simple */}
+            {umkm.Maps_url && (
+              <a 
+                href={umkm.Maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-4 right-4 bg-white text-blue-600 px-4 py-2 rounded-lg shadow-md font-medium hover:bg-gray-50 transition text-sm flex items-center gap-2"
+              >
+                <FiMapPin /> Buka di Google Maps
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
       
-      {/* Footer is outside the hero, might need adjustment if footer should be visible without scrolling, but hero is h-screen so footer is below fold */}
       <Footer />
     </div>
   );

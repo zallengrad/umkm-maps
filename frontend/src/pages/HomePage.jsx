@@ -176,9 +176,14 @@ const HomePage = () => {
       {/* CARD GRID SECTION */}
       <section className="bg-gray-100 py-10 px-4" data-aos="fade-up" data-aos-delay="200">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Daftar UMKM
-          </h2>
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: "Poppins, sans-serif" }}>
+              Daftar UMKM
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: "Inter, sans-serif" }}>
+              Temukan berbagai produk dan jasa unggulan dari pelaku usaha mikro, kecil, dan menengah di Desa Bejiarum.
+            </p>
+          </div>
 
           {loading ? (
             <GridSkeleton count={12} />
@@ -257,6 +262,50 @@ const HomePage = () => {
               )}
             </>
           )}
+        </div>
+      </section>
+
+
+      
+      {/* GLOBAL MAPS PREVIEW SECTION */}
+      <section className="py-16 bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: "Poppins, sans-serif" }}>
+              Peta Lokasi UMKM
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: "Inter, sans-serif" }}>
+              Jelajahi sebaran UMKM di Desa Bejiarum. Temukan lokasi usaha favorit Anda dengan mudah.
+            </p>
+          </div>
+          
+          <div className="bg-gray-100 rounded-2xl overflow-hidden shadow-lg h-96 w-full relative">
+            <iframe
+              title="Peta Desa Bejiarum"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              scrolling="no"
+              marginHeight="0"
+              marginWidth="0"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent("Bejiarum, Kertek, Wonosobo")}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+              className="w-full h-full"
+            ></iframe>
+            
+            <a 
+              href="https://www.google.com/maps/search/UMKM+Bejiarum+Kertek+Wonosobo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute bottom-4 right-4 bg-white text-blue-600 px-4 py-2 rounded-lg shadow-md font-medium hover:bg-gray-50 transition text-sm flex items-center gap-2"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              Buka Peta Lengkap
+            </a>
+          </div>
         </div>
       </section>
 
