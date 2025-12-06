@@ -8,6 +8,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules"; // Hapus Navigation
 import { API_BASE_URL } from "../utils/apiConfig"; // ✨ IMPORT INI ✨
 import { getGalleryImage } from "../utils/imageOptimizer";
+import { DetailSkeleton } from "../components/LoadingSkeleton";
 
 const DetailPage = () => {
   const { id } = useParams();
@@ -48,8 +49,8 @@ const DetailPage = () => {
     return (
       <>
         <Navbar />
-        <section className="pt-24 px-4 py-10 min-h-screen flex items-center justify-center bg-gray-50">
-          <p className="text-center text-gray-600">Memuat detail UMKM...</p>
+        <section className="pt-24 px-4 py-10 min-h-screen bg-gray-50">
+          <DetailSkeleton />
         </section>
         <Footer />
       </>

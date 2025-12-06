@@ -5,6 +5,7 @@ import UMKMCard from "../components/UMKMCard";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { API_BASE_URL } from "../utils/apiConfig";
+import { GridSkeleton } from "../components/LoadingSkeleton";
 
 // DAFTAR KATEGORI UMKM YANG LENGKAP (tetap sama)
 const UMKM_CATEGORIES = [
@@ -180,7 +181,7 @@ const HomePage = () => {
           </h2>
 
           {loading ? (
-            <p className="text-center text-gray-600">Memuat data UMKM...</p>
+            <GridSkeleton count={12} />
           ) : error ? (
             <p className="text-center text-red-600">{error}</p>
           ) : filteredUMKM.length === 0 ? (
