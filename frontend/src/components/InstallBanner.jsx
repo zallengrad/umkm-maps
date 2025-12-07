@@ -64,24 +64,34 @@ const InstallBanner = () => {
 
   const handleConfirmInstall = async () => {
     if (!deferredPrompt) {
-      // Fallback for browsers that don't support install prompt
-      alert('Untuk install aplikasi:\n\nAndroid/Chrome: Tap menu (⋮) → "Install app" atau "Add to Home screen"\n\niOS/Safari: Tap Share (⎙) → "Add to Home Screen"');
+      // Browser doesn't support install prompt or already installed
+      alert('Browser Anda tidak mendukung instalasi PWA atau aplikasi sudah terinstall.\n\nUntuk install manual:\n\n📱 Android/Chrome:\nTap menu (⋮) → "Install app" atau "Tambahkan ke layar utama"\n\n🍎 iOS/Safari:\nTap Share (⎙) → "Add to Home Screen"\n\n💻 Desktop:\nKlik icon install di address bar atau menu browser');
       setShowModal(false);
       return;
     }
 
     try {
+      // Show native browser install prompt
       deferredPrompt.prompt();
+      
+      // Wait for user response
       const { outcome } = await deferredPrompt.userChoice;
       
       if (outcome === 'accepted') {
+        // User accepted the install
         setShowBanner(false);
+        setShowModal(false);
+        setIsInstalled(true);
+      } else {
+        // User dismissed the install prompt
         setShowModal(false);
       }
       
+      // Clear the prompt
       setDeferredPrompt(null);
     } catch (error) {
       console.error('Install error:', error);
+      setShowModal(false);
     }
   };
 
