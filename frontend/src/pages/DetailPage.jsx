@@ -29,7 +29,6 @@ const DetailPage = () => {
         }
         const data = await response.json();
         setUmkm(data);
-        console.log("✅ Data UMKM detail berhasil diambil:", data);
       } catch (err) {
         console.error("❌ Gagal mengambil detail UMKM:", err);
         setError("Gagal memuat detail UMKM. Silakan coba lagi.");

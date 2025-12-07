@@ -20,8 +20,6 @@ export function optimizeSupabaseImage(url, options = {}) {
   // Return URL asli, optimasi hanya dari lazy loading
   // TODO: Aktifkan Image Transformation di Supabase Dashboard jika diperlukan
   
-  console.log('Original URL:', url);
-  
   // Jika bukan URL Supabase atau URL lokal, return as is
   if (!url || !url.includes('supabase.co/storage') || url.startsWith('/')) {
     return url;

@@ -22,11 +22,9 @@ const getAuthStorage = () => {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: getAuthStorage(), // ✨ GUNAKAN FUNGSI INI! ✨
+    storage: getAuthStorage(),
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
   },
 });
-
-console.log("Supabase Client Frontend Terinisialisasi.");

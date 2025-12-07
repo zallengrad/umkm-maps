@@ -55,7 +55,7 @@ const HomePage = () => {
       }
       const data = await response.json();
       setUmkmList(data);
-      console.log("✅ Data UMKM berhasil diambil dari backend untuk HomePage:", data);
+
     } catch (err) {
       console.error("❌ Gagal mengambil data UMKM untuk HomePage:", err);
       setError("Gagal memuat data UMKM. Silakan coba lagi.");
@@ -95,9 +95,7 @@ const HomePage = () => {
   const currentItems = filteredUMKM.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredUMKM.length / itemsPerPage);
 
-  console.log("HomePage: umkmList:", umkmList);
-  console.log("HomePage: filteredUMKM:", filteredUMKM);
-  console.log("HomePage: currentItems:", currentItems);
+
 
   return (
     <>
