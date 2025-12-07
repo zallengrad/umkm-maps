@@ -3,7 +3,7 @@ import React from "react";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-800 text-white text-center py-6 mt-10">
+    <footer className="bg-gray-800 text-white text-center py-6">
       <div className="text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
         {/* ✨ PERUBAHAN DI SINI: Memecah teks untuk tampilan mobile ✨ */}
         <p>© 2025 UMKM Bejiarum.</p>

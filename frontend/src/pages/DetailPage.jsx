@@ -7,6 +7,7 @@ import { FiChevronLeft, FiChevronRight, FiMapPin, FiPhone, FiClock, FiInfo } fro
 import { API_BASE_URL } from "../utils/apiConfig";
 import { getGalleryImage } from "../utils/imageOptimizer";
 import { DetailSkeleton } from "../components/LoadingSkeleton";
+import InstallBanner from "../components/InstallBanner";
 
 const DetailPage = () => {
   const { id } = useParams();
@@ -255,6 +256,10 @@ const DetailPage = () => {
           </div>
         </div>
       </section>
+      
+      
+      {/* Install Banner - Above Footer */}
+      <InstallBanner />
       
       <Footer />
     </div>

@@ -49,8 +49,9 @@ const Navbar = ({ onLogoutClick }) => {
       <div className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
           {/* Judul / Logo */}
-          <Link to={logoTarget} className="text-xl md:text-2xl font-bold text-gray-800" style={{ fontFamily: "Poppins, sans-serif" }}>
-            UMKM Bejiarum
+          <Link to={logoTarget} className="flex items-center gap-3 text-xl md:text-2xl font-bold text-gray-800" style={{ fontFamily: "Poppins, sans-serif" }}>
+            <img src="/icons/icon-192x192.png" alt="Logo UMKM Bejiarum" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
+            <span>UMKM Bejiarum</span>
           </Link>
 
           {/* Tombol kanan */}

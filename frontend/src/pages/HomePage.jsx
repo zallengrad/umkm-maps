@@ -6,6 +6,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { API_BASE_URL } from "../utils/apiConfig";
 import { GridSkeleton } from "../components/LoadingSkeleton";
+import InstallBanner from "../components/InstallBanner";
 
 // DAFTAR KATEGORI UMKM YANG LENGKAP (tetap sama)
 const UMKM_CATEGORIES = [
@@ -306,6 +307,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Install Banner - Above Footer */}
+      <InstallBanner />
 
       <Footer />
     </>
